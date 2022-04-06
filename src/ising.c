@@ -8,12 +8,14 @@
 
 #include "ising.h"
 
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
 
 
 // Global variables
 char fname[FNAMESIZE];	// Name for config files
-
-
 
 void init_tables(Par *par)
 {
@@ -37,11 +39,78 @@ double *measure(Par *par, double *v, int *spin)
 //}
 
 
-
 #ifndef CLU
+int wrap(int x, int min, int max)
+{
+  if (x < min)
+  {
+    int diff = min-x;
+    return wrap(max + diff, min, max);
+  } else if (x > max)
+  {
+    int diff = x - max;
+    return wrap(min + diff, min, max);
+  }
+
+  return x;
+}
+
+double sum_neighbor_spins(Par* par, int x, int y, int my_spin, int* spin)
+{
+  double res = 0.0;
+  const int L = par->L;
+  const int xleft = x-1;
+  const int xright = x+1;
+  const int ydown = y-1;
+  const int yup = y+1;
+
+  for (int x_i = xleft; x_i <= xright; x_i++)
+  {
+    for (int y_i = ydown; y_i <= yup; y_i++)
+    {
+      //  skip, not a neighbor
+      if (x_i == x && y_i == y)
+      {
+        continue;
+      }
+
+      int x_wrapped = wrap(x_i, 0, L-1);
+      int y_wrapped = wrap(y_i, 0, L-1);
+
+      int nbor_spin = spin[x_wrapped + y_wrapped * par->L];
+      res += (double)my_spin*(double)nbor_spin;
+    }
+  }
+
+  return res;
+}
+
 int update(Par *par, int *spin)
 {
-  // Fix this (2). Write the update routine.
+  int accept = 0;
+  const int L2 = par->L * par->L;
+
+  for (int i = 0; i < L2; i++)
+  {
+    const int curr_spin = spin[i];
+    const int negated_spin = -curr_spin;
+    const int x = i % par->L;
+    const int y = i / par->L;
+
+    double energy_before = -sum_neighbor_spins(par, x, y, curr_spin, spin);
+    double energy_after = -sum_neighbor_spins(par, x, y, negated_spin, spin);
+    double energy_delta = energy_after - energy_before;
+
+    double prob = min(exp(-energy_delta/par->t), 1.0);
+    double epsi = dran();
+
+    if (epsi < prob)
+    {
+      spin[i] = negated_spin;
+      accept = accept + 1;
+    }
+  }
+
   return accept;
 }
 #endif
@@ -205,7 +274,7 @@ int read_args(Par *par, char *arg)
 
 
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   int i, iarg;
   Par *par = malloc(sizeof(Par));
@@ -232,4 +301,5 @@ main(int argc, char *argv[])
       exit(EXIT_FAILURE);
 
   free(par);
+  return 0;
 }
