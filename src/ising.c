@@ -77,7 +77,6 @@ double sum_neighbor_spins(Par* par, int x, int y, int my_spin, int* spin)
     const int* pos = &neighbors[i * 2];
     int x_wrapped = wrap(pos[0], 0, L-1);
     int y_wrapped = wrap(pos[1], 0, L-1);
-
     int nbor_spin = spin[x_wrapped + y_wrapped * par->L];
     res += (double)my_spin*(double)nbor_spin;
   }
