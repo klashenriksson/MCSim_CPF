@@ -22,24 +22,6 @@ void init_tables(Par *par)
   // Fix this (4). Initialize a table with exp(Delta E/T)
 }
 
-double *measure(Par *par, double *v, int *spin)
-{
-  // Fix this (3). Write a routine that measures energy and magnetization.
-}
-
-
-
-// void result(Par *par, ..., int ntot, int final)
-//{
-//  Fix this (3): Print out averages for energy, heat capacity, and
-//  the absolute value of the magnetization per spin (remember to use 'fabs', not 'abs').
-//  if (final)
-//    printf("  --------  --------  --------\n");
-//  printf(" %8f  %8f  %8f \n", energy, cv, magn);
-//}
-
-
-#ifndef CLU
 int wrap(int x, int min, int max)
 {
   if (x < min)
@@ -84,6 +66,40 @@ double sum_neighbor_spins(Par* par, int x, int y, int my_spin, int* spin)
   return res;
 }
 
+void measure(Par *par, int *spin, double* out_energy, double* out_magnetization)
+{
+  int L2 = par->L * par->L;
+
+  *out_energy = 0.;
+  *out_magnetization = 0.f;
+  for (int i = 0; i < L2; i++)
+  {
+    int x = i % par->L;
+    int y = i / par->L;
+    double energy_per_spin = 0.5 * -sum_neighbor_spins(par, x, y, spin[i], spin); //Since we double count we divide by half
+    *out_energy += energy_per_spin;
+    *out_magnetization += spin[i];
+  }
+}
+
+
+
+void result(Par *par, double energy, double energy_sqrd, double magnetization, int ntot, int final)
+{
+  int L2 = par->L * par->L;
+  double ntot_d = (double)ntot;
+  double l2_ntot_d = (double)(L2 * ntot);
+  double e = energy/l2_ntot_d;
+  double Cv = (1.0 / (par->t * par->t)) * (energy_sqrd/ntot_d - energy*energy/(ntot_d*ntot_d))/(double)L2;
+  double m = magnetization/l2_ntot_d;
+
+  if (final)
+    printf("  --------  --------  --------\n");
+  printf(" %8f  %8f  %8f \n", e, Cv, m);
+}
+
+
+#ifndef CLU
 int update(Par *par, int *spin)
 {
   int accept = 0;
@@ -135,6 +151,7 @@ int mc(Par *par, int *spin)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
   double t = par->t, acc, accept = 0.0, L2 = par->L * par->L;
+  double energy = 0.0, energy_sqrd = 0.0, magnetization = 0.0;
 
 
   // *** Read in the configuration for the present parameters if already present.
@@ -160,17 +177,33 @@ int mc(Par *par, int *spin)
     update(par, spin);
 
   for (iblock = 0; iblock < par->nblock; iblock++) {
-    
+    double block_energy = 0.;
+    double block_energy_sqrd = 0.;
+    double block_magnetization = 0.;
+
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       accept += update(par, spin);
       // Fix this (3). measure(par, ..., spin);
+      
+      double sample_energy = 0.0, sample_magnetization = 0.0;
+      measure(par, spin, &sample_energy, &sample_magnetization);
+
+      block_energy += sample_energy;
+      block_energy_sqrd += sample_energy * sample_energy;
+      block_magnetization += fabs(sample_magnetization); //We only care about the abolute magnetization, not direction
     }
-    
+
+    energy += block_energy;
+    energy_sqrd += block_energy_sqrd;
+    magnetization += block_magnetization;
+
     // Fix this (5): write_config(par, spin, fname);
     // Fix this (3): Results for one block. result(par, ..., par->nsamp, 0);
+    result(par, block_energy, block_energy_sqrd, block_magnetization, par->nsamp, 0);
     
   }
   // Fix this (3). Results for the whole run. result(par, ..., par->nblock * par->nsamp, 1);
+  result(par, energy, energy_sqrd, magnetization, par->nblock * par->nsamp, 1);
 
   acc = accept * 100.0 / (L2 * par->nblock * par->nsamp);
   printf("\nAcceptance: %5.2f\n", acc);
