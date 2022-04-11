@@ -76,9 +76,8 @@ double sum_neighbor_spins(Par* par, int x, int y, int my_spin, int* spin)
     x, yup, 
     x, ydown
   };
-  const int n_neighbors = 4;
 
-  for (int i = 0; i < n_neighbors; i++)
+  for (int i = 0; i < 4; i++)
   {
     const int* pos = &neighbors[i * 2];
     int x_wrapped = wrap(pos[0], 0, L-1);
@@ -105,7 +104,6 @@ void measure(Par *par, int *spin, double* out_energy, double* out_magnetization)
     *out_magnetization += spin[i];
   }
 }
-
 
 
 void result(Par *par, double energy, double energy_sqrd, double magnetization, int ntot, int final)
@@ -176,6 +174,58 @@ int update(Par *par, int *spin)
 
 
 // Fix this (Cluster update). Write the cluster update function.
+int update(Par* par, int* spin)
+{
+  int accept = 1;
+  int_queue_empty(&par->queue);
+
+  const int L2 = par->L * par->L;
+  const int i_start = iran() % L2;
+  const int S = spin[i_start];
+  spin[i_start] = -S;
+
+  int_queue_push_back(&par->queue, i_start);
+  while (int_queue_size(&par->queue) > 0)
+  {
+    const int i = int_queue_pop_front(&par->queue);
+    const int x = i % par->L;
+    const int y = i / par->L;
+    const int xleft = x-1;
+    const int xright = x+1;
+    const int yup = y+1;
+    const int ydown = y-1;
+
+    const int neighbors[] = {
+      xleft, y, 
+      xright, y, 
+      x, yup, 
+      x, ydown
+    };
+
+    for (int n_i = 0; n_i < 4; n_i++)
+    {
+      const int* pos = &neighbors[n_i*2];
+      const int x_wrapped = wrap(pos[0], 0, par->L-1);
+      const int y_wrapped = wrap(pos[1], 0, par->L-1);
+      const int nbor_spin = spin[x_wrapped + y_wrapped * par->L];
+
+      if (nbor_spin == S)
+      {
+        const double prob = min(1.0 - exp(-2.0/par->t), 1.0);
+        const double epsi = dran();
+        if (epsi < prob)
+        {
+          int nbor_idx = x_wrapped + y_wrapped * par->L;
+          spin[nbor_idx] = -spin[nbor_idx];
+          int_queue_push_back(&par->queue, nbor_idx);
+          accept += 1;
+        }
+      }
+    }
+  }
+
+  return accept;
+}
 
 #endif
 
@@ -197,6 +247,7 @@ int mc(Par *par, int *spin)
   // *** Write out information about the run: size, temperature,...
 #ifdef CLU
   printf("2D Ising model with the Wolff cluster algorithm.\n");
+  par->queue = int_queue_create(L2*L2);
 #else
   printf("2D Ising model with the Metropolis algorithm.\n");
 #endif
@@ -219,7 +270,6 @@ int mc(Par *par, int *spin)
 
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       accept += update(par, spin);
-      // Fix this (3). measure(par, ..., spin);
       
       double sample_energy = 0.0, sample_magnetization = 0.0;
       measure(par, spin, &sample_energy, &sample_magnetization);
@@ -237,7 +287,6 @@ int mc(Par *par, int *spin)
     result(par, block_energy, block_energy_sqrd, block_magnetization, par->nsamp, 0);
     
   }
-  // Fix this (3). Results for the whole run. result(par, ..., par->nblock * par->nsamp, 1);
   result(par, energy, energy_sqrd, magnetization, par->nblock * par->nsamp, 1);
 
   acc = accept * 100.0 / (L2 * par->nblock * par->nsamp);

@@ -1,3 +1,4 @@
+#include "int_queue.h"
 
 #ifdef SSFAST
 #define SS
@@ -5,12 +6,15 @@
 
 
 #define FNAMESIZE 64
-
+#define CLU
 
 typedef struct Par {
   int L;
   double t;
   int ntherm, nblock, nsamp, seed;
+  #ifdef CLU
+  int_queue_t queue;
+  #endif
 } Par;
 
 // In config.c
