@@ -16,10 +16,34 @@
 
 // Global variables
 char fname[FNAMESIZE];	// Name for config files
+double delta_energy_table[5];
+
+double unscaled_delta_2_energy(int deltaE)
+{
+  int index = (deltaE + 8) / 4;
+  if (index < 0 || index > 4)
+  {
+    printf("Unexpected delta energy! Can not tabulate! (%d)\n", deltaE);
+    return NAN;
+  }
+
+  return delta_energy_table[index];
+}
 
 void init_tables(Par *par)
 {
-  // Fix this (4). Initialize a table with exp(Delta E/T)
+  double delta_Es[] = {
+    -8.,
+    -4.,
+    0.,
+    4.,
+    8.,
+  };
+
+  for (int i = 0; i < sizeof(delta_Es)/sizeof(delta_Es[0]); i++)
+  {
+    delta_energy_table[i] = exp(-delta_Es[i]/par->t);
+  }
 }
 
 int wrap(int x, int min, int max)
@@ -116,7 +140,7 @@ int update(Par *par, int *spin)
     double energy_after = -sum_neighbor_spins(par, x, y, negated_spin, spin);
     double energy_delta = energy_after - energy_before;
 
-    double prob = min(exp(-energy_delta/par->t), 1.0);
+    double prob = min(unscaled_delta_2_energy(energy_delta), 1.0);
     double epsi = dran();
 
     if (epsi < prob)
@@ -224,7 +248,7 @@ int initialize_mc(Par *par, int *spin) {
 
   init_ran(par->seed);
 
-  // Fix this (4): init_tables(par);
+  init_tables(par);
 
   sprintf(fname, "%3.3d_%5.3f", par->L, par->t);
 
