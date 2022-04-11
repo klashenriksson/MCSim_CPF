@@ -118,7 +118,19 @@ void result(Par *par, double energy, double energy_sqrd, double magnetization, i
   double m = magnetization/l2_ntot_d;
 
   if (final)
+  {
     printf("  --------  --------  --------\n");
+
+    //also write results to file.
+    char resname[256] = {0};
+    sprintf(resname, "results_T_%8f_L_%d.txt", par->t, par->L);
+    FILE* res_file = fopen(resname, "a+");
+    if (res_file)
+    {
+      fprintf(res_file, "%8f %d %8f %8f %8f\n", par->t, par->L, e, Cv, m);
+      fclose(res_file);
+    }
+  }
   printf(" %8f  %8f  %8f \n", e, Cv, m);
 }
 
@@ -179,8 +191,8 @@ int mc(Par *par, int *spin)
 
 
   // *** Read in the configuration for the present parameters if already present.
-  // Fix this (5): if (read_config(par, spin, fname))
-  // Fix this (5):   ntherm = 0;
+  if (read_config(par, spin, fname))
+    ntherm = 0;
 
   // *** Write out information about the run: size, temperature,...
 #ifdef CLU
@@ -221,8 +233,7 @@ int mc(Par *par, int *spin)
     energy_sqrd += block_energy_sqrd;
     magnetization += block_magnetization;
 
-    // Fix this (5): write_config(par, spin, fname);
-    // Fix this (3): Results for one block. result(par, ..., par->nsamp, 0);
+    write_config(par, spin, fname);
     result(par, block_energy, block_energy_sqrd, block_magnetization, par->nsamp, 0);
     
   }

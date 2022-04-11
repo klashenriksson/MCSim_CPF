@@ -13,7 +13,6 @@ int write_config(Par *par, int *spin, char *fname)
 {
   int L2 = par->L * par->L, fdesc;
   char filename[FNAMESIZE + 5] = "conf/";
-
   strcat(filename, fname);
   fdesc = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (fdesc < 0) {
