@@ -247,7 +247,7 @@ int mc(Par *par, int *spin)
   // *** Write out information about the run: size, temperature,...
 #ifdef CLU
   printf("2D Ising model with the Wolff cluster algorithm.\n");
-  par->queue = int_queue_create(L2*L2);
+  par->queue = int_queue_create(L2);
 #else
   printf("2D Ising model with the Metropolis algorithm.\n");
 #endif
