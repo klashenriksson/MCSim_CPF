@@ -285,7 +285,6 @@ int mc(Par *par, int *spin)
 
     write_config(par, spin, fname);
     result(par, block_energy, block_energy_sqrd, block_magnetization, par->nsamp, 0);
-    
   }
   result(par, energy, energy_sqrd, magnetization, par->nblock * par->nsamp, 1);
 
