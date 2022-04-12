@@ -110,7 +110,7 @@ void result(Par *par, double energy, double energy_sqrd, double magnetization, i
 {
   int L2 = par->L * par->L;
   double ntot_d = (double)ntot;
-  double l2_ntot_d = (double)(L2 * ntot);
+  double l2_ntot_d = (double)L2 * (double)ntot;
   double e = energy/l2_ntot_d;
   double Cv = (1.0 / (par->t * par->t)) * (energy_sqrd/ntot_d - energy*energy/(ntot_d*ntot_d))/(double)L2;
   double m = magnetization/l2_ntot_d;
