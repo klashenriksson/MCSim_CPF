@@ -11,6 +11,11 @@
 #ifndef min
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
+#define CORR
+
+#ifdef CORR
+#include "corr.h"
+#endif
 
 
 
@@ -232,7 +237,6 @@ int update(Par* par, int* spin)
 
 
 
-
 int mc(Par *par, int *spin)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
@@ -259,6 +263,10 @@ int mc(Par *par, int *spin)
   
   printf("\n energy      cv        magn     \n");
 
+  #ifdef CORR
+  corr_t corr = corr_create(par->nblock * par->nsamp);
+  #endif
+
   // Thermalize the system 
   for (i = 0; i < ntherm; i++)
     update(par, spin);
@@ -273,6 +281,10 @@ int mc(Par *par, int *spin)
       
       double sample_energy = 0.0, sample_magnetization = 0.0;
       measure(par, spin, &sample_energy, &sample_magnetization);
+
+      #ifdef CORR
+      corr_step(&corr, sample_energy);
+      #endif
 
       block_energy += sample_energy;
       block_energy_sqrd += sample_energy * sample_energy;
@@ -290,6 +302,26 @@ int mc(Par *par, int *spin)
 
   acc = accept * 100.0 / (L2 * par->nblock * par->nsamp);
   printf("\nAcceptance: %5.2f\n", acc);
+
+  #ifdef CORR
+  char corrname[256] = {0};
+  sprintf(corrname, "correlations_T_%8f_L_%d.txt", par->t, par->L);
+  FILE* corr_file = fopen(corrname, "w");
+  if (corr_file)
+  {
+    double correlations[200] = {0};
+    corr_compute(&corr, correlations, 200);
+
+    fprintf(corr_file, "t C\n");
+    for(int i = 0; i < 200; i++)
+    {
+      fprintf(corr_file, "%8f %d %d %5.2f\n", par->t, par->L, i, correlations[i]);
+    }
+
+    fclose(corr_file);
+  }
+  #endif
+
   return 1;
 }
 

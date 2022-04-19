@@ -6,7 +6,6 @@
 
 
 #define FNAMESIZE 64
-#define CLU
 
 typedef struct Par {
   int L;

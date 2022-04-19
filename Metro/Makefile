@@ -1,11 +1,11 @@
 CC = gcc
-CFLAGS  = -g -O4
+CFLAGS  = -g -O4 -std=c99
 LOADLIBES = -lm
 VPATH = ../src
 
 INCLUDES = ran.h
 
-OBJS = ising.o config.o ran.o
+OBJS = ising.o config.o ran.o corr.o
 
 ising: ${OBJS}
 
