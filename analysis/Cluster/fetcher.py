@@ -7,13 +7,12 @@ with open("sim_confs.json", "r") as config_file:
     for config in data["configs"]:
         Ls = config["L"]
         Ts = config["T"]
-        nblock = config["nblock"]
 
         for L in Ls:
             for T in Ts:
                 params = [
                     f"ising.exe",
-                    f"nblock={nblock}",
+                    "nblock=64",
                     f"L={L}",
                     f"T={T}",
                     "run"
