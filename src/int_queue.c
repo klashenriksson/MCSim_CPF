@@ -33,6 +33,8 @@ int int_queue_push_back(int_queue_t* q, int i)
     *(q->back) = i;
     q->back += 1;
     //TODO maybe wrap here if needed..
+
+    return 0;
 }
 
 int int_queue_pop_front(int_queue_t* q)

@@ -8,15 +8,18 @@
 
 #include "ising.h"
 
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
-#define CORR
-
 #ifdef CORR
 #include "corr.h"
 #endif
 
+#ifdef DRAW_GRAPHICS
+#include <g2.h>
+#include <g2_gd.h>
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
 
 
 // Global variables
@@ -178,7 +181,6 @@ int update(Par *par, int *spin)
 #endif
 
 
-// Fix this (Cluster update). Write the cluster update function.
 int update(Par* par, int* spin)
 {
   int accept = 1;
@@ -235,7 +237,37 @@ int update(Par* par, int* spin)
 #endif
 
 
+#ifdef DRAW_GRAPHICS
+void draw_model(Par* par, int* spins, int iteration)
+{
+  char filename[256] = {0};
+  sprintf(filename, "model_%f_%d_%d.png", par->t, par->L, iteration);
 
+
+  const int image_width = 800;
+  const int image_height = 800;
+  const float spin_width = (float)image_width/(float)par->L;
+  const float spin_height = (float)image_height/(float)par->L;
+  const float spin_r = sqrt(0.25 * spin_width * spin_width + 0.25 * spin_height + spin_height);
+
+  int surf = g2_open_gd(filename, image_width, image_height, g2_gd_png);
+
+  const int L2 = par->L * par->L;
+  for (int i = 0; i < L2; i++)
+  {
+    const float x = (float)(i % par->L) * spin_width;
+    const float y = (float)(i / par->L) * spin_height;
+
+    int spin = spins[i];
+    int color = spin + 2;
+
+    g2_pen(surf, color);
+    g2_filled_circle(surf, x + spin_r, y + spin_r, spin_r);
+  }
+
+  g2_close(surf);
+}
+#endif
 
 int mc(Par *par, int *spin)
 {
@@ -271,12 +303,26 @@ int mc(Par *par, int *spin)
   for (i = 0; i < ntherm; i++)
     update(par, spin);
 
+  #ifdef DRAW_GRAPHICS
+  int num_imgs = 5;
+  int total_iterations = par->nblock * par->nsamp;
+  int iteration_quotient = total_iterations/num_imgs; 
+  #endif
+
   for (iblock = 0; iblock < par->nblock; iblock++) {
     double block_energy = 0.;
     double block_energy_sqrd = 0.;
     double block_magnetization = 0.;
 
     for (isamp = 0; isamp < par->nsamp; isamp++) {
+      #ifdef DRAW_GRAPHICS
+      int iteration = iblock*par->nsamp + isamp;
+      if (iteration % iteration_quotient == 0 || iteration == total_iterations-1)
+      {
+        draw_model(par, spin, iteration);
+      }
+      #endif
+
       accept += update(par, spin);
       
       double sample_energy = 0.0, sample_magnetization = 0.0;

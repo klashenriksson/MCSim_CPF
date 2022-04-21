@@ -1,18 +1,9 @@
-CC = gcc
-CFLAGS  = -g -O4 -std=c99
-LOADLIBES = -lm
-VPATH = ../src
 
-INCLUDES = ran.h
+INCLUDES = -I../g2/include -L../g2
+LIBS = -lm -lg2 -lgd
+CFLAGS = -std=c99 -DCORR -DDRAW_GRAPHICS -O3
 
-OBJS = ising.o config.o ran.o corr.o
+SRC = ../src/ran.c ../src/config.c ../src/ising.c ../src/corr.c
 
-ising: ${OBJS}
-
-summary.o: ising.h
-
-summary: summary.o
-
-gtot: gtot.o
-
-${OBJS}: ${INCLUDES} Makefile
+ising:
+	gcc $(SRC) -o ising $(CFLAGS) $(INCLUDES) $(LIBS)
