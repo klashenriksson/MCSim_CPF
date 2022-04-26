@@ -140,12 +140,48 @@ void result(Par *par, double energy, double energy_sqrd, double magnetization, i
   printf(" %8f  %8f  %8f \n", e, Cv, m);
 }
 
+#ifdef DRAW_GRAPHICS
+void draw_model(Par* par, int* spins, int iteration)
+{
+  char filename[256] = {0};
+  sprintf(filename, "model_%f_%d_%d.png", par->t, par->L, iteration);
+
+
+  const int image_width = 800;
+  const int image_height = 800;
+  const float spin_width = (float)image_width/(float)par->L;
+  const float spin_height = (float)image_height/(float)par->L;
+  const float spin_r = sqrt(0.25 * spin_width * spin_width + 0.25 * spin_height + spin_height);
+
+  int surf = g2_open_gd(filename, image_width, image_height, g2_gd_png);
+
+  const int L2 = par->L * par->L;
+  for (int i = 0; i < L2; i++)
+  {
+    const float x = (float)(i % par->L) * spin_width;
+    const float y = (float)(i / par->L) * spin_height;
+
+    int spin = spins[i];
+    int color = spin + 2;
+
+    g2_pen(surf, color);
+    g2_filled_circle(surf, x + spin_r, y + spin_r, spin_r);
+  }
+
+  g2_close(surf);
+}
+#endif
 
 #ifndef CLU
-int update(Par *par, int *spin)
+int update(Par *par, int *spin, int draw)
 {
   int accept = 0;
   const int L2 = par->L * par->L;
+
+  #ifdef DRAW_GRAPHICS
+  if (draw)
+    draw_model(par, spin, 0);
+  #endif
 
   for (int i = 0; i < L2; i++)
   {
@@ -165,7 +201,12 @@ int update(Par *par, int *spin)
     {
       spin[i] = negated_spin;
       accept = accept + 1;
+      #ifdef DRAW_GRAPHICS
+      if (draw)
+        draw_model(par, spin, i+1);
+      #endif
     }
+
   }
 
   return accept;
@@ -181,8 +222,14 @@ int update(Par *par, int *spin)
 #endif
 
 
-int update(Par* par, int* spin)
+int update(Par* par, int* spin, int draw)
 {
+  #ifdef DRAW_GRAPHICS
+  if (draw)
+  {
+    draw_model(par, spin, 0);
+  }
+  #endif
   int accept = 1;
   int_queue_empty(&par->queue);
 
@@ -192,6 +239,10 @@ int update(Par* par, int* spin)
   spin[i_start] = -S;
 
   int_queue_push_back(&par->queue, i_start);
+
+#ifdef DRAW_GRAPHICS
+  int iteration = 0;
+#endif
   while (int_queue_size(&par->queue) > 0)
   {
     const int i = int_queue_pop_front(&par->queue);
@@ -226,6 +277,10 @@ int update(Par* par, int* spin)
           spin[nbor_idx] = -spin[nbor_idx];
           int_queue_push_back(&par->queue, nbor_idx);
           accept += 1;
+          #ifdef DRAW_GRAPHICS
+          if (draw)
+            draw_model(par, spin, iteration++);
+          #endif     
         }
       }
     }
@@ -234,39 +289,6 @@ int update(Par* par, int* spin)
   return accept;
 }
 
-#endif
-
-
-#ifdef DRAW_GRAPHICS
-void draw_model(Par* par, int* spins, int iteration)
-{
-  char filename[256] = {0};
-  sprintf(filename, "model_%f_%d_%d.png", par->t, par->L, iteration);
-
-
-  const int image_width = 800;
-  const int image_height = 800;
-  const float spin_width = (float)image_width/(float)par->L;
-  const float spin_height = (float)image_height/(float)par->L;
-  const float spin_r = sqrt(0.25 * spin_width * spin_width + 0.25 * spin_height + spin_height);
-
-  int surf = g2_open_gd(filename, image_width, image_height, g2_gd_png);
-
-  const int L2 = par->L * par->L;
-  for (int i = 0; i < L2; i++)
-  {
-    const float x = (float)(i % par->L) * spin_width;
-    const float y = (float)(i / par->L) * spin_height;
-
-    int spin = spins[i];
-    int color = spin + 2;
-
-    g2_pen(surf, color);
-    g2_filled_circle(surf, x + spin_r, y + spin_r, spin_r);
-  }
-
-  g2_close(surf);
-}
 #endif
 
 int mc(Par *par, int *spin)
@@ -301,7 +323,7 @@ int mc(Par *par, int *spin)
 
   // Thermalize the system 
   for (i = 0; i < ntherm; i++)
-    update(par, spin);
+    update(par, spin, 0);
 
   #ifdef DRAW_GRAPHICS
   int num_imgs = 5;
@@ -315,15 +337,15 @@ int mc(Par *par, int *spin)
     double block_magnetization = 0.;
 
     for (isamp = 0; isamp < par->nsamp; isamp++) {
-      #ifdef DRAW_GRAPHICS
       int iteration = iblock*par->nsamp + isamp;
+      #ifdef DRAW_GRAPHICS
       if (iteration % iteration_quotient == 0 || iteration == total_iterations-1)
       {
         draw_model(par, spin, iteration);
       }
       #endif
 
-      accept += update(par, spin);
+      accept += update(par, spin, iteration == 0 ? 1 : 0);
       
       double sample_energy = 0.0, sample_magnetization = 0.0;
       measure(par, spin, &sample_energy, &sample_magnetization);
@@ -358,7 +380,6 @@ int mc(Par *par, int *spin)
     double correlations[200] = {0};
     corr_compute(&corr, correlations, 200);
 
-    fprintf(corr_file, "t C\n");
     for(int i = 0; i < 200; i++)
     {
       fprintf(corr_file, "%8f %d %d %5.2f\n", par->t, par->L, i, correlations[i]);

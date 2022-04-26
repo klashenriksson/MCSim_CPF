@@ -1,5 +1,6 @@
 typedef struct corr {
     double* e_buffer;
+    double e_tot;
     int time_steps;
     int curr_step;
 } corr_t;
