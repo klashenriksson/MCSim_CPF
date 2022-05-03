@@ -4,9 +4,11 @@
 #include <fcntl.h>
 #include <time.h>
 #include <math.h>
-#include "ran.h"
 
+
+#include "ran.h"
 #include "ising.h"
+#include "data.h"
 
 #ifdef CORR
 #include "corr.h"
@@ -114,7 +116,7 @@ void measure(Par *par, int *spin, double* out_energy, double* out_magnetization)
 }
 
 
-void result(Par *par, double energy, double energy_sqrd, double magnetization, int ntot, int final)
+result_t result(Par *par, double energy, double energy_sqrd, double magnetization, int ntot, int final)
 {
   int L2 = par->L * par->L;
   double ntot_d = (double)ntot;
@@ -126,18 +128,15 @@ void result(Par *par, double energy, double energy_sqrd, double magnetization, i
   if (final)
   {
     printf("  --------  --------  --------\n");
-
-    //also write results to file.
-    char resname[256] = {0};
-    sprintf(resname, "results_T_%8f_L_%d.txt", par->t, par->L);
-    FILE* res_file = fopen(resname, "a+");
-    if (res_file)
-    {
-      fprintf(res_file, "%8f %d %8f %8f %8f\n", par->t, par->L, e, Cv, m);
-      fclose(res_file);
-    }
   }
   printf(" %8f  %8f  %8f \n", e, Cv, m);
+
+  result_t r;
+  r.e = e;
+  r.c = Cv;
+  r.m = m;
+
+  return r;
 }
 
 #ifdef DRAW_GRAPHICS
@@ -291,6 +290,30 @@ int update(Par* par, int* spin, int draw)
 
 #endif
 
+int check_data_file(Par* par) {
+
+  if (!dir_exists("data/"))
+  {
+    #ifdef _WIN32
+    _mkdir("data/");
+    #else
+    mkdir("data/", 0700);
+    #endif
+  }
+
+  char filename[256] = {0};
+  datafile_get_filename(par, filename);
+  FILE* f = fopen(filename, "r");
+  if (!f)
+  {
+    f = fopen(filename, "w");
+    char par_buff[256] = {0};
+    int par_length = serialize_par(par, par_buff);
+    fwrite(par_buff, sizeof(char), par_length, f);
+    fclose(f);
+  }
+}
+
 int mc(Par *par, int *spin)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
@@ -301,6 +324,15 @@ int mc(Par *par, int *spin)
   // *** Read in the configuration for the present parameters if already present.
   if (read_config(par, spin, fname))
     ntherm = 0;
+
+  char datafilename[256] = {0};
+  datafile_get_filename(par, datafilename);
+  FILE* data_file = fopen(datafilename, "a");
+  if(!data_file)
+  {
+    printf("Error! Expected datafile to be created. Aborting.\n");
+    return -1;
+  }
 
   // *** Write out information about the run: size, temperature,...
 #ifdef CLU
@@ -364,9 +396,12 @@ int mc(Par *par, int *spin)
     magnetization += block_magnetization;
 
     write_config(par, spin, fname);
-    result(par, block_energy, block_energy_sqrd, block_magnetization, par->nsamp, 0);
+    result_t r = result(par, block_energy, block_energy_sqrd, block_magnetization, par->nsamp, 0);
+    datafile_write_block_results(data_file, r, iblock);
   }
   result(par, energy, energy_sqrd, magnetization, par->nblock * par->nsamp, 1);
+
+  fclose(data_file);
 
   acc = accept * 100.0 / (L2 * par->nblock * par->nsamp);
   printf("\nAcceptance: %5.2f\n", acc);
@@ -392,8 +427,6 @@ int mc(Par *par, int *spin)
   return 1;
 }
 
-
-
 int initialize_mc(Par *par, int *spin) {
   int i, L2 = par->L * par->L;
   char *f2;
@@ -409,6 +442,8 @@ int initialize_mc(Par *par, int *spin) {
   init_tables(par);
 
   sprintf(fname, "%3.3d_%5.3f", par->L, par->t);
+
+  check_data_file(par);
 
   return mc(par, spin);
 }
