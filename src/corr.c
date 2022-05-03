@@ -29,10 +29,11 @@ void corr_compute(corr_t* corr, double* out_correlations, int max_correlation_st
         {
             double e_0 = corr->e_buffer[data_i];
             double e_t = corr->e_buffer[data_i+i];
-            C += (e_0-e_avg)*(e_t-e_avg);
+            C += e_0*e_t;
         }
 
         C /= (corr->time_steps-i);
+        C -= e_avg*e_avg;
         out_correlations[i] = C;
     }
 }
