@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <direct.h>
 #include <sys/stat.h>
 
 #include "data.h"
@@ -34,4 +35,16 @@ int dir_exists(char* dirname)
 {
   struct stat sb;
   return stat(dirname, &sb) == 0 && S_ISDIR(sb.st_mode);
+}
+
+int create_if_not_exists(char* dirname)
+{
+    if(!dir_exists(dirname))
+    {
+        #ifdef _WIN32
+        _mkdir(dirname);
+        #else
+        mkdir(dirname, 0700);
+        #endif
+    }
 }

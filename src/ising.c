@@ -292,14 +292,7 @@ int update(Par* par, int* spin, int draw)
 
 int check_data_file(Par* par) {
 
-  if (!dir_exists("data/"))
-  {
-    #ifdef _WIN32
-    _mkdir("data/");
-    #else
-    mkdir("data/", 0700);
-    #endif
-  }
+  create_if_not_exists("data/");
 
   char filename[256] = {0};
   datafile_get_filename(par, filename);
@@ -407,8 +400,9 @@ int mc(Par *par, int *spin)
   printf("\nAcceptance: %5.2f\n", acc);
 
   #ifdef CORR
+  create_if_not_exists("correlations/");
   char corrname[256] = {0};
-  sprintf(corrname, "correlations_T_%8f_L_%d.txt", par->t, par->L);
+  sprintf(corrname, "correlations/correlations_T_%8f_L_%d.txt", par->t, par->L);
   FILE* corr_file = fopen(corrname, "w");
   if (corr_file)
   {
