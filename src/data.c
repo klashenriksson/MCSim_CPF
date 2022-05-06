@@ -35,6 +35,19 @@ int datafile_read_block_results(FILE* datafile, result_t* out_results, int* out_
     return fscanf(datafile, "block %d e %lf c %lf m %lf m2 %lf m4 %lf\n", out_block, &out_results->e, &out_results->c, &out_results->m, &out_results->m2, &out_results->m4);
 }
 
+void spincorrfile_get_filename(Par* par, char* filename_buff)
+{
+  sprintf(filename_buff, "corr/corr_L%d_T%5.3f.txt", par->L, par->t);
+}
+
+void spincorrfile_write_block_results(FILE* spincorrfile, double* correlations, int L, int block)
+{
+  for (int i = 0; i < L; i++)
+  {
+    fprintf(spincorrfile, "%8f\n", correlations[i]);
+  }
+}
+
 int dir_exists(char* dirname)
 {
   struct stat sb;

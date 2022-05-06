@@ -303,8 +303,14 @@ int update(Par* par, int* spin, int draw)
 
 #endif
 
-void check_data_file(Par* par) {
+void fwrite_par(FILE* f, Par* par) 
+{
+  char par_buff[256] = {0};
+  int par_length = serialize_par(par, par_buff);
+  fwrite(par_buff, sizeof(char), par_length, f);
+}
 
+void check_data_file(Par* par) {
   create_if_not_exists("data/");
 
   char filename[256] = {0};
@@ -313,9 +319,21 @@ void check_data_file(Par* par) {
   if (!f)
   {
     f = fopen(filename, "w");
-    char par_buff[256] = {0};
-    int par_length = serialize_par(par, par_buff);
-    fwrite(par_buff, sizeof(char), par_length, f);
+    fwrite_par(f, par);
+    fclose(f);
+  }
+}
+
+void check_spincorr_file(Par* par) {
+  create_if_not_exists("corr/");
+
+  char filename[256] = {0};
+  spincorrfile_get_filename(par, filename);
+  FILE* f = fopen(filename, "r");
+  if (!f)
+  {
+    f = fopen(filename, "w");
+    fwrite_par(f, par);
     fclose(f);
   }
 }
@@ -336,7 +354,16 @@ int mc(Par *par, int *spin)
   FILE* data_file = fopen(datafilename, "a");
   if(!data_file)
   {
-    printf("Error! Expected datafile to be created. Aborting.\n");
+    fprintf(stderr, "Error! Expected datafile to be created. Aborting.\n");
+    return -1;
+  }
+
+  char spincorrfilename[256] = {0};
+  spincorrfile_get_filename(par, spincorrfilename);
+  FILE* spincorr_file = fopen(spincorrfilename, "a");
+  if (!spincorr_file)
+  {
+    fprintf(stderr, "Error! Expected spincorrfile to be created. Aborting.\n");
     return -1;
   }
 
@@ -369,12 +396,19 @@ int mc(Par *par, int *spin)
   int iteration_quotient = total_iterations/num_imgs; 
   #endif
 
+  double* block_spin_corrs = malloc(sizeof(double)*par->L);
+
   for (iblock = 0; iblock < par->nblock; iblock++) {
     double block_energy = 0.;
     double block_energy_sqrd = 0.;
     double block_magnetization = 0.;
     double block_mag2 = 0.;
     double block_mag4 = 0.;
+
+    for (int i = 0; i < par->L; i++)
+    {
+      block_spin_corrs[i] = 0.f;
+    }
 
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       int iteration = iblock*par->nsamp + isamp;
@@ -394,6 +428,24 @@ int mc(Par *par, int *spin)
       corr_step(&corr, sample_energy);
       #endif
 
+      // spin correlation
+      for (int x = 0; x < par->L; x++)
+      {
+        double spin_corr = 0.;
+        for (int x_sweep = 0; x_sweep < par->L; x_sweep++)
+        {
+          int y = 0;
+          int idx1 = x_sweep + y*par->L;
+          int idx2 = wrap(x_sweep+x, 0, par->L-1) + y*par->L;
+          int spin_1 = spin[idx1];
+          int spin_2 = spin[idx2];
+          spin_corr += spin_1*spin_2;
+        }
+
+        spin_corr /= par->L;
+        block_spin_corrs[x] += spin_corr;
+      }
+
       block_energy += sample_energy;
       block_energy_sqrd += sample_energy * sample_energy;
       block_magnetization += fabs(sample_magnetization); //We only care about the abolute magnetization, not direction
@@ -410,6 +462,7 @@ int mc(Par *par, int *spin)
     write_config(par, spin, fname);
     result_t r = result(par, block_energy, block_energy_sqrd, block_magnetization, block_mag2, block_mag4, par->nsamp, 0);
     datafile_write_block_results(data_file, r, iblock);
+    spincorrfile_write_block_results(data_file, block_spin_corrs, par->L, iblock);
   }
   result(par, energy, energy_sqrd, magnetization, mag2, mag4, par->nblock * par->nsamp, 1);
 
@@ -457,6 +510,7 @@ int initialize_mc(Par *par, int *spin) {
   sprintf(fname, "%3.3d_%5.3f", par->L, par->t);
 
   check_data_file(par);
+  check_spincorr_file(par);
 
   return mc(par, spin);
 }
