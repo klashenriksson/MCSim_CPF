@@ -12,6 +12,8 @@
 typedef struct result {
   double e;
   double m;
+  double m2;
+  double m4;
   double c;
 } result_t;
 

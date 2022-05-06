@@ -135,6 +135,8 @@ result_t result(Par *par, double energy, double energy_sqrd, double magnetizatio
   r.e = e;
   r.c = Cv;
   r.m = m;
+  r.m2 = m*m;
+  r.m4 = m*m*m*m;
 
   return r;
 }
