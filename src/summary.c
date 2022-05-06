@@ -28,9 +28,9 @@ datafile_t read_file(FILE* f, Par* par)
     datafile.avg_e += r.e;
     datafile.avg_c += r.c;
     datafile.avg_m += r.m;
-    datafile.nblocks += 1;
     datafile.avg_m2 += r.m2;
     datafile.avg_m4 += r.m4;
+    datafile.nblocks += 1;
   }
 
   datafile.avg_e /= datafile.nblocks;
@@ -47,7 +47,7 @@ datafile_t read_file(FILE* f, Par* par)
 void result(Par *par, datafile_t* df)
 {
   double m_variance = 1.0/(df->nblocks-1) * (df->avg_m2 - df->avg_m*df->avg_m);
-  double Q = 1.0 - df->avg_m4/(3.0*df->avg_m2*df->avg_m2);
+  double Q = df->avg_m2*df->avg_m2/df->avg_m4;
   printf("L %3.3d T %8f m %8f m_variance %8f Q %8f\n", par->L, par->t, df->avg_m, m_variance, Q);
 }
 

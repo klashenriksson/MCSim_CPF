@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
 #include <direct.h>
+#else
+#include <unistd.h>
+#endif
 #include <sys/stat.h>
 
 #include "data.h"
@@ -37,7 +41,7 @@ int dir_exists(char* dirname)
   return stat(dirname, &sb) == 0 && S_ISDIR(sb.st_mode);
 }
 
-int create_if_not_exists(char* dirname)
+void create_if_not_exists(char* dirname)
 {
     if(!dir_exists(dirname))
     {

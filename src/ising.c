@@ -116,27 +116,38 @@ void measure(Par *par, int *spin, double* out_energy, double* out_magnetization)
 }
 
 
-result_t result(Par *par, double energy, double energy_sqrd, double magnetization, int ntot, int final)
+result_t result(Par *par, double energy, double energy_sqrd, double magnetization, double mag2, double mag4, int ntot, int final)
 {
-  int L2 = par->L * par->L;
+  double L2 = (double)par->L * (double)par->L;
   double ntot_d = (double)ntot;
-  double l2_ntot_d = (double)L2 * (double)ntot;
-  double e = energy/l2_ntot_d;
-  double Cv = (1.0 / (par->t * par->t)) * (energy_sqrd/ntot_d - energy*energy/(ntot_d*ntot_d))/(double)L2;
-  double m = magnetization/l2_ntot_d;
+
+  double E = energy/ntot_d;
+  double E2 = energy_sqrd/ntot_d;
+
+  double e = E/L2;
+
+  double Cv = (1.0 / (par->t * par->t)) * (E2 - E*E) / L2;
+
+  double M = magnetization/ntot_d;
+  double M2 = mag2/ntot_d;
+  double M4 = mag4/ntot_d;
+
+  double m = M/L2;
+  double m2 = M2/(L2*L2);
+  double m4 = M4/(L2*L2*L2*L2);
 
   if (final)
   {
     printf("  --------  --------  --------\n");
   }
-  printf(" %8f  %8f  %8f \n", e, Cv, m);
+  printf(" %8f  %8f  %8f %8f\n", e, Cv, m, m2);
 
   result_t r;
   r.e = e;
   r.c = Cv;
   r.m = m;
-  r.m2 = m*m;
-  r.m4 = m*m*m*m;
+  r.m2 = m2;
+  r.m4 = m4;
 
   return r;
 }
@@ -292,7 +303,7 @@ int update(Par* par, int* spin, int draw)
 
 #endif
 
-int check_data_file(Par* par) {
+void check_data_file(Par* par) {
 
   create_if_not_exists("data/");
 
@@ -313,7 +324,7 @@ int mc(Par *par, int *spin)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
   double t = par->t, acc, accept = 0.0, L2 = par->L * par->L;
-  double energy = 0.0, energy_sqrd = 0.0, magnetization = 0.0;
+  double energy = 0.0, energy_sqrd = 0.0, magnetization = 0.0, mag2 = 0.0, mag4 = 0.0;
 
 
   // *** Read in the configuration for the present parameters if already present.
@@ -362,6 +373,8 @@ int mc(Par *par, int *spin)
     double block_energy = 0.;
     double block_energy_sqrd = 0.;
     double block_magnetization = 0.;
+    double block_mag2 = 0.;
+    double block_mag4 = 0.;
 
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       int iteration = iblock*par->nsamp + isamp;
@@ -384,17 +397,21 @@ int mc(Par *par, int *spin)
       block_energy += sample_energy;
       block_energy_sqrd += sample_energy * sample_energy;
       block_magnetization += fabs(sample_magnetization); //We only care about the abolute magnetization, not direction
+      block_mag2 += sample_magnetization * sample_magnetization;
+      block_mag4 += sample_magnetization * sample_magnetization * sample_magnetization * sample_magnetization;
     }
 
     energy += block_energy;
     energy_sqrd += block_energy_sqrd;
     magnetization += block_magnetization;
+    mag2 += block_mag2;
+    mag4 += block_mag4;
 
     write_config(par, spin, fname);
-    result_t r = result(par, block_energy, block_energy_sqrd, block_magnetization, par->nsamp, 0);
+    result_t r = result(par, block_energy, block_energy_sqrd, block_magnetization, block_mag2, block_mag4, par->nsamp, 0);
     datafile_write_block_results(data_file, r, iblock);
   }
-  result(par, energy, energy_sqrd, magnetization, par->nblock * par->nsamp, 1);
+  result(par, energy, energy_sqrd, magnetization, mag2, mag4, par->nblock * par->nsamp, 1);
 
   fclose(data_file);
 

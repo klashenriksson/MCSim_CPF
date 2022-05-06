@@ -1,2 +1,0 @@
-L 008 T 2.200 nblock 001 nsamp 1000 ntherm 1000 seed 134270190
-block 0 e -1.535625 c 1.152330 m 0.805187

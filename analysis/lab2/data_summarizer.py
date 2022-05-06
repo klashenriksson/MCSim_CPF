@@ -10,8 +10,8 @@ args = sys.argv[1:]
 files = {arg: [] for arg in args}
 summary_filepath = os.path.join(get_script_path(), "summary.exe" if platform.system() == "Windows" else "summary")
 
-if not os.path.isdir(os.path.join(get_script_path(), "summary")):
-    os.mkdir(os.path.join(get_script_path(), "summary"))
+if not os.path.isdir(os.path.join(get_script_path(), "data_summary")):
+    os.mkdir(os.path.join(get_script_path(), "data_summary"))
 
 for filepath in os.listdir("data/"):
     for arg in args:
@@ -20,7 +20,7 @@ for filepath in os.listdir("data/"):
             files[arg].append(fullpath)
 
 for arg in files.keys():
-    with open(os.path.join("summary", f"{arg}.txt"), "w+") as f:
+    with open(os.path.join("data_summary", f"{arg}.txt"), "w+") as f:
         process = subprocess.Popen([summary_filepath], text=True, stdin=subprocess.PIPE, stdout=f, stderr=subprocess.PIPE, cwd=get_script_path())
         input = '\n'.join([str(path) + "\n" for path in files[arg]])
         process.communicate(input=input)
