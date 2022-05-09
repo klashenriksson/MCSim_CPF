@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "complex": "c",
+        "__locale": "c",
+        "__tuple": "c",
+        "algorithm": "c",
+        "atomic": "c",
+        "locale": "c",
+        "memory": "c"
+    }
+}

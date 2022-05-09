@@ -324,20 +324,6 @@ void check_data_file(Par* par) {
   }
 }
 
-void check_spincorr_file(Par* par) {
-  create_if_not_exists("corr/");
-
-  char filename[256] = {0};
-  spincorrfile_get_filename(par, filename);
-  FILE* f = fopen(filename, "r");
-  if (!f)
-  {
-    f = fopen(filename, "w");
-    fwrite_par(f, par);
-    fclose(f);
-  }
-}
-
 int mc(Par *par, int *spin)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
@@ -355,15 +341,6 @@ int mc(Par *par, int *spin)
   if(!data_file)
   {
     fprintf(stderr, "Error! Expected datafile to be created. Aborting.\n");
-    return -1;
-  }
-
-  char spincorrfilename[256] = {0};
-  spincorrfile_get_filename(par, spincorrfilename);
-  FILE* spincorr_file = fopen(spincorrfilename, "a");
-  if (!spincorr_file)
-  {
-    fprintf(stderr, "Error! Expected spincorrfile to be created. Aborting.\n");
     return -1;
   }
 
@@ -462,7 +439,7 @@ int mc(Par *par, int *spin)
     write_config(par, spin, fname);
     result_t r = result(par, block_energy, block_energy_sqrd, block_magnetization, block_mag2, block_mag4, par->nsamp, 0);
     datafile_write_block_results(data_file, r, iblock);
-    spincorrfile_write_block_results(data_file, block_spin_corrs, par->L, iblock);
+    datafile_write_block_spin_correlations(data_file, block_spin_corrs, par->L);
   }
   result(par, energy, energy_sqrd, magnetization, mag2, mag4, par->nblock * par->nsamp, 1);
 
@@ -510,7 +487,6 @@ int initialize_mc(Par *par, int *spin) {
   sprintf(fname, "%3.3d_%5.3f", par->L, par->t);
 
   check_data_file(par);
-  check_spincorr_file(par);
 
   return mc(par, spin);
 }

@@ -1,0 +1,10 @@
+L 008 T 2.200 nblock 001 nsamp 1000 ntherm 1000 seed 0
+block 0 e -1.555625 c 1.032330 m 0.818625 m2 0.700920 m4 0.546051
+spincorr x 0 value 1000.000000
+spincorr x 1 value 775.500000
+spincorr x 2 value 719.500000
+spincorr x 3 value 693.500000
+spincorr x 4 value 685.000000
+spincorr x 5 value 693.500000
+spincorr x 6 value 719.500000
+spincorr x 7 value 775.500000

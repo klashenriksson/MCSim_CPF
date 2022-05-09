@@ -30,22 +30,38 @@ void datafile_write_block_results(FILE* datafile, result_t r, int block)
   fprintf(datafile, "block %d e %8f c %8f m %8f m2 %8f m4 %8f\n", block, r.e, r.c, r.m, r.m2, r.m4);
 }
 
-int datafile_read_block_results(FILE* datafile, result_t* out_results, int* out_block)
+int datafile_read_block_results(FILE* datafile, result_t* out_results)
 {
-    return fscanf(datafile, "block %d e %lf c %lf m %lf m2 %lf m4 %lf\n", out_block, &out_results->e, &out_results->c, &out_results->m, &out_results->m2, &out_results->m4);
+    return fscanf(datafile, "block %*d e %lf c %lf m %lf m2 %lf m4 %lf\n", &out_results->e, &out_results->c, &out_results->m, &out_results->m2, &out_results->m4);
 }
 
-void spincorrfile_get_filename(Par* par, char* filename_buff)
-{
-  sprintf(filename_buff, "corr/corr_L%d_T%5.3f.txt", par->L, par->t);
-}
-
-void spincorrfile_write_block_results(FILE* spincorrfile, double* correlations, int L, int block)
+void datafile_write_block_spin_correlations(FILE* datafile, double* correlations, int L)
 {
   for (int i = 0; i < L; i++)
   {
-    fprintf(spincorrfile, "%8f\n", correlations[i]);
+    fprintf(datafile, "spincorr x %d value %8f\n", i, correlations[i]);
   }
+}
+
+int datafile_read_block_spin_correlations(FILE* datafile, double* out_correlations, int L)
+{
+  int ret = 0;
+  for (int i = 0; i < L; i++)
+  {
+    ret = fscanf(datafile, "spincorr x %*d value %lf\n", &out_correlations[i]);
+  }
+  return ret;
+}
+
+int datafile_read_block(FILE* datafile, result_t* out_results, double* out_correlations, int L)
+{
+  int ret = datafile_read_block_results(datafile, out_results);
+  if (ret == EOF || ret <= 0)
+  {
+    return ret;
+  }
+  ret = datafile_read_block_spin_correlations(datafile, out_correlations, L);
+  return ret;
 }
 
 int dir_exists(char* dirname)

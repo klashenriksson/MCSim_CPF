@@ -1,11 +1,171 @@
 L 016 T 2.210 nblock 010 nsamp 1000 ntherm 1000 seed 0
-block 0 e -1.513156 c 1.494787 m 0.764172 m2 0.609996 m4 0.413381
-block 1 e -1.535125 c 1.255893 m 0.782797 m2 0.634763 m4 0.439201
-block 2 e -1.545641 c 1.307236 m 0.784625 m2 0.640344 m4 0.449835
-block 3 e -1.548203 c 1.276102 m 0.793859 m2 0.653053 m4 0.462107
-block 4 e -1.536016 c 1.314188 m 0.782555 m2 0.636166 m4 0.442218
-block 5 e -1.545937 c 1.166981 m 0.791898 m2 0.646360 m4 0.450914
-block 6 e -1.557937 c 1.144693 m 0.801867 m2 0.659788 m4 0.466289
-block 7 e -1.531578 c 1.309639 m 0.784250 m2 0.636751 m4 0.440966
-block 8 e -1.543250 c 1.278308 m 0.792289 m2 0.647359 m4 0.452005
-block 9 e -1.540266 c 1.283912 m 0.788180 m2 0.644276 m4 0.451982
+block 0 e -1.515047 c 1.482766 m 0.762922 m2 0.609317 m4 0.413743
+spincorr x 0 value 1000.000000
+spincorr x 1 value 763.250000
+spincorr x 2 value 695.750000
+spincorr x 3 value 669.250000
+spincorr x 4 value 650.500000
+spincorr x 5 value 638.250000
+spincorr x 6 value 636.000000
+spincorr x 7 value 630.500000
+spincorr x 8 value 626.000000
+spincorr x 9 value 630.500000
+spincorr x 10 value 636.000000
+spincorr x 11 value 638.250000
+spincorr x 12 value 650.500000
+spincorr x 13 value 669.250000
+spincorr x 14 value 695.750000
+spincorr x 15 value 763.250000
+block 1 e -1.533172 c 1.504882 m 0.779438 m2 0.633061 m4 0.441313
+spincorr x 0 value 1000.000000
+spincorr x 1 value 754.750000
+spincorr x 2 value 674.750000
+spincorr x 3 value 649.000000
+spincorr x 4 value 632.500000
+spincorr x 5 value 630.250000
+spincorr x 6 value 626.750000
+spincorr x 7 value 623.750000
+spincorr x 8 value 619.500000
+spincorr x 9 value 623.750000
+spincorr x 10 value 626.750000
+spincorr x 11 value 630.250000
+spincorr x 12 value 632.500000
+spincorr x 13 value 649.000000
+spincorr x 14 value 674.750000
+spincorr x 15 value 754.750000
+block 2 e -1.541297 c 1.452795 m 0.784922 m2 0.641194 m4 0.450498
+spincorr x 0 value 1000.000000
+spincorr x 1 value 786.250000
+spincorr x 2 value 702.000000
+spincorr x 3 value 674.000000
+spincorr x 4 value 667.000000
+spincorr x 5 value 655.500000
+spincorr x 6 value 644.000000
+spincorr x 7 value 645.000000
+spincorr x 8 value 640.750000
+spincorr x 9 value 645.000000
+spincorr x 10 value 644.000000
+spincorr x 11 value 655.500000
+spincorr x 12 value 667.000000
+spincorr x 13 value 674.000000
+spincorr x 14 value 702.000000
+spincorr x 15 value 786.250000
+block 3 e -1.544328 c 1.282560 m 0.784586 m2 0.641084 m4 0.451040
+spincorr x 0 value 1000.000000
+spincorr x 1 value 763.750000
+spincorr x 2 value 689.750000
+spincorr x 3 value 655.000000
+spincorr x 4 value 638.500000
+spincorr x 5 value 625.000000
+spincorr x 6 value 619.750000
+spincorr x 7 value 609.500000
+spincorr x 8 value 602.500000
+spincorr x 9 value 609.500000
+spincorr x 10 value 619.750000
+spincorr x 11 value 625.000000
+spincorr x 12 value 638.500000
+spincorr x 13 value 655.000000
+spincorr x 14 value 689.750000
+spincorr x 15 value 763.750000
+block 4 e -1.546328 c 1.270395 m 0.787703 m2 0.642314 m4 0.450553
+spincorr x 0 value 1000.000000
+spincorr x 1 value 769.000000
+spincorr x 2 value 697.000000
+spincorr x 3 value 661.250000
+spincorr x 4 value 639.500000
+spincorr x 5 value 630.000000
+spincorr x 6 value 623.000000
+spincorr x 7 value 624.250000
+spincorr x 8 value 621.500000
+spincorr x 9 value 624.250000
+spincorr x 10 value 623.000000
+spincorr x 11 value 630.000000
+spincorr x 12 value 639.500000
+spincorr x 13 value 661.250000
+spincorr x 14 value 697.000000
+spincorr x 15 value 769.000000
+block 5 e -1.531734 c 1.367985 m 0.782625 m2 0.633620 m4 0.438664
+spincorr x 0 value 1000.000000
+spincorr x 1 value 759.250000
+spincorr x 2 value 689.000000
+spincorr x 3 value 654.000000
+spincorr x 4 value 645.250000
+spincorr x 5 value 633.000000
+spincorr x 6 value 621.750000
+spincorr x 7 value 621.750000
+spincorr x 8 value 618.250000
+spincorr x 9 value 621.750000
+spincorr x 10 value 621.750000
+spincorr x 11 value 633.000000
+spincorr x 12 value 645.250000
+spincorr x 13 value 654.000000
+spincorr x 14 value 689.000000
+spincorr x 15 value 759.250000
+block 6 e -1.538219 c 1.285870 m 0.784023 m2 0.637027 m4 0.442418
+spincorr x 0 value 1000.000000
+spincorr x 1 value 783.000000
+spincorr x 2 value 707.250000
+spincorr x 3 value 676.750000
+spincorr x 4 value 651.500000
+spincorr x 5 value 642.250000
+spincorr x 6 value 628.500000
+spincorr x 7 value 625.000000
+spincorr x 8 value 627.750000
+spincorr x 9 value 625.000000
+spincorr x 10 value 628.500000
+spincorr x 11 value 642.250000
+spincorr x 12 value 651.500000
+spincorr x 13 value 676.750000
+spincorr x 14 value 707.250000
+spincorr x 15 value 783.000000
+block 7 e -1.538250 c 1.189284 m 0.790063 m2 0.643338 m4 0.447135
+spincorr x 0 value 1000.000000
+spincorr x 1 value 766.250000
+spincorr x 2 value 703.000000
+spincorr x 3 value 670.750000
+spincorr x 4 value 652.500000
+spincorr x 5 value 644.000000
+spincorr x 6 value 632.000000
+spincorr x 7 value 627.750000
+spincorr x 8 value 637.000000
+spincorr x 9 value 627.750000
+spincorr x 10 value 632.000000
+spincorr x 11 value 644.000000
+spincorr x 12 value 652.500000
+spincorr x 13 value 670.750000
+spincorr x 14 value 703.000000
+spincorr x 15 value 766.250000
+block 8 e -1.542141 c 1.215771 m 0.792695 m2 0.647054 m4 0.452171
+spincorr x 0 value 1000.000000
+spincorr x 1 value 765.000000
+spincorr x 2 value 682.750000
+spincorr x 3 value 657.000000
+spincorr x 4 value 637.500000
+spincorr x 5 value 629.750000
+spincorr x 6 value 628.000000
+spincorr x 7 value 623.500000
+spincorr x 8 value 621.000000
+spincorr x 9 value 623.500000
+spincorr x 10 value 628.000000
+spincorr x 11 value 629.750000
+spincorr x 12 value 637.500000
+spincorr x 13 value 657.000000
+spincorr x 14 value 682.750000
+spincorr x 15 value 765.000000
+block 9 e -1.538594 c 1.524809 m 0.786648 m2 0.640066 m4 0.447066
+spincorr x 0 value 1000.000000
+spincorr x 1 value 772.500000
+spincorr x 2 value 693.000000
+spincorr x 3 value 659.000000
+spincorr x 4 value 640.500000
+spincorr x 5 value 624.750000
+spincorr x 6 value 625.500000
+spincorr x 7 value 617.000000
+spincorr x 8 value 612.750000
+spincorr x 9 value 617.000000
+spincorr x 10 value 625.500000
+spincorr x 11 value 624.750000
+spincorr x 12 value 640.500000
+spincorr x 13 value 659.000000
+spincorr x 14 value 693.000000
+spincorr x 15 value 772.500000

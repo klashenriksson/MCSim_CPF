@@ -13,6 +13,7 @@ typedef struct datafile
   double avg_m;
   double avg_m2;
   double avg_m4;
+  double* correlations;
   int nblocks;
 } datafile_t;
 
@@ -23,8 +24,9 @@ datafile_t read_file(FILE* f, Par* par)
 
   result_t r;
   
-  int block = 0;
-  while (datafile_read_block_results(f, &r, &block) != EOF) {
+  double* correlations = malloc(sizeof(double) * par->L);
+
+  while (datafile_read_block(f, &r, correlations, par->L) != EOF) {
     datafile.avg_e += r.e;
     datafile.avg_c += r.c;
     datafile.avg_m += r.m;
@@ -38,6 +40,7 @@ datafile_t read_file(FILE* f, Par* par)
   datafile.avg_m /= datafile.nblocks;
   datafile.avg_m2 /= datafile.nblocks;
   datafile.avg_m4 /= datafile.nblocks;
+  datafile.correlations = correlations;
 
   return datafile;
 }
@@ -46,9 +49,14 @@ datafile_t read_file(FILE* f, Par* par)
 // magnetization, error bars for magnetization, and Binder's cumulant.
 void result(Par *par, datafile_t* df)
 {
-  double m_variance = 1.0/(df->nblocks-1) * (df->avg_m2 - df->avg_m*df->avg_m);
+  double m_variance = 1.0/(fmax(df->nblocks-1,1)) * (df->avg_m2 - df->avg_m*df->avg_m);
   double Q = df->avg_m2*df->avg_m2/df->avg_m4;
-  printf("L %3.3d T %8f m %8f m_variance %8f Q %8f\n", par->L, par->t, df->avg_m, m_variance, Q);
+  printf("L %d T %8f m %8f m_variance %8f Q %8f\n", par->L, par->t, df->avg_m, m_variance, Q);
+  printf("spin_corr:\n");
+  for(int i = 0; i < par->L; i++)
+  {
+    printf("x %d value %8f\n", i, df->correlations[i]);
+  }
 }
 
 
@@ -85,5 +93,8 @@ int main(int argc, char *argv[])
 
     if (df.nblocks > 0)
       result(par, &df);
+
+
+    free(df.correlations);
   }
 }
