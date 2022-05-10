@@ -52,11 +52,15 @@ void result(Par *par, datafile_t* df)
   double m_variance = 1.0/(fmax(df->nblocks-1,1)) * (df->avg_m2 - df->avg_m*df->avg_m);
   double Q = df->avg_m2*df->avg_m2/df->avg_m4;
   printf("L %d T %8f m %8f m_variance %8f Q %8f\n", par->L, par->t, df->avg_m, m_variance, Q);
-  printf("spin_corr:\n");
-  for(int i = 0; i < par->L; i++)
-  {
-    printf("x %d value %8f\n", i, df->correlations[i]);
-  }
+}
+
+void result_correlations(FILE* corrfile, Par *par, datafile_t* df)
+{
+    fprintf(corrfile, "L %d T %8f\nspin_corr:\n", par->L, par->t);
+    for(int i = 0; i < par->L; i++)
+    {
+      fprintf(corrfile, "x %d value %8f\n", i, df->correlations[i]);
+    }
 }
 
 
@@ -94,6 +98,20 @@ int main(int argc, char *argv[])
     if (df.nblocks > 0)
       result(par, &df);
 
+    //  Also print correlations
+    char corrname[256] = {0};
+    sprintf(corrname, "spincorr/L%d_T%5.3f.txt", par->L, par->t);
+    
+    create_if_not_exists("spincorr/");
+    FILE* f_spincorr = fopen(corrname, "w");
+    if (!f_spincorr)
+    {
+      fprintf(stderr, "*** Can't open spin correlation file %s\n.", corrname);
+      continue;
+    }
+
+    result_correlations(f_spincorr, par, &df);
+    fclose(f_spincorr);
 
     free(df.correlations);
   }

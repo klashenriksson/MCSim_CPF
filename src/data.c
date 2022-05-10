@@ -11,7 +11,7 @@
 
 int serialize_par(Par* par, char* buff)
 {
-  return sprintf(buff, "L %3.3d T %5.3f nblock %3.3d nsamp %3.3d ntherm %3.3d seed %d\n", par->L, par->t, par->nblock, par->nsamp, par->ntherm, par->seed);
+  return sprintf(buff, "L %3.3d T %8f nblock %d nsamp %d ntherm %d seed %d\n", par->L, par->t, par->nblock, par->nsamp, par->ntherm, par->seed);
 }
 
 void deserialize_par(FILE* f, Par* out_par)
