@@ -5,7 +5,6 @@
 #include <time.h>
 #include <math.h>
 
-
 #include "ran.h"
 #include "ising.h"
 #include "data.h"
@@ -269,10 +268,15 @@ int update(Par* par, int* spin, int draw)
       xleft, y, 
       xright, y, 
       x, yup, 
-      x, ydown
+      x, ydown,
+#ifdef TRI
+      xleft, yup,
+      xright, ydown
+#endif
     };
+    const int n_neighbors = sizeof(neighbors)/sizeof(int)/2;
 
-    for (int n_i = 0; n_i < 4; n_i++)
+    for (int n_i = 0; n_i < n_neighbors; n_i++)
     {
       const int* pos = &neighbors[n_i*2];
       const int x_wrapped = wrap(pos[0], 0, par->L-1);
@@ -350,6 +354,10 @@ int mc(Par *par, int *spin)
   par->queue = int_queue_create(L2);
 #else
   printf("2D Ising model with the Metropolis algorithm.\n");
+#endif
+
+#ifdef TRI
+  printf("Using Triangular lattice.\n");
 #endif
 
   printf("\n====    %d x %d     T = %g    ====\n", par->L, par->L, par->t);

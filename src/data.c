@@ -21,7 +21,11 @@ void deserialize_par(FILE* f, Par* out_par)
 
 void datafile_get_filename(Par* par, char* filename_buff)
 {
-  sprintf(filename_buff, "data/data_L%3.3d_T%5.3f.txt", par->L, par->t);
+  #ifndef TRI
+  sprintf(filename_buff, "data/data_L%3.3d_T%8f.txt", par->L, par->t);
+  #else
+  sprintf(filename_buff, "data/data_tri_L%3.3d_T%8f.txt", par->L, par->t);
+  #endif
 }
 
 void datafile_write_block_results(FILE* datafile, result_t r, int block)

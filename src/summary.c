@@ -100,8 +100,12 @@ int main(int argc, char *argv[])
 
     //  Also print correlations
     char corrname[256] = {0};
-    sprintf(corrname, "spincorr/L%d_T%5.3f.txt", par->L, par->t);
-    
+    #ifndef TRI
+    sprintf(corrname, "spincorr/tri_L%d_T%8f.txt", par->L, par->t);
+    #else
+    sprintf(corrname, "spincorr/tri_L%d_T%8f.txt", par->L, par->t);
+    #endif
+
     create_if_not_exists("spincorr/");
     FILE* f_spincorr = fopen(corrname, "w");
     if (!f_spincorr)
