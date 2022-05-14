@@ -419,7 +419,7 @@ int mc(Par *par, int *spin)
         double spin_corr = 0.;
         for (int x_sweep = 0; x_sweep < par->L; x_sweep++)
         {
-          int y = 0;
+          int y = uran() % par->L;
           int idx1 = x_sweep + y*par->L;
           int idx2 = wrap(x_sweep+x, 0, par->L-1) + y*par->L;
           int spin_1 = spin[idx1];
@@ -427,7 +427,7 @@ int mc(Par *par, int *spin)
           spin_corr += spin_1*spin_2;
         }
 
-        spin_corr /= par->L;
+        spin_corr /= (par->L * par->nsamp);
         block_spin_corrs[x] += spin_corr;
       }
 

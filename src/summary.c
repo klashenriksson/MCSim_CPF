@@ -25,9 +25,14 @@ datafile_t read_file(FILE* f, Par* par)
 
   result_t r;
   
+  double* block_correlations = malloc(sizeof(double) * par->L);
   double* correlations = malloc(sizeof(double) * par->L);
+  for (int i = 0; i < par->L; i++)
+  {
+    correlations[i] = 0.;
+  }
 
-  while (datafile_read_block(f, &r, correlations, par->L) != EOF) {
+  while (datafile_read_block(f, &r, block_correlations, par->L) != EOF) {
     datafile.avg_e += r.e;
     datafile.avg_c += r.c;
     datafile.avg_m += r.m;
@@ -35,6 +40,11 @@ datafile_t read_file(FILE* f, Par* par)
     datafile.avg_m2 += r.m2;
     datafile.avg_m4 += r.m4;
     datafile.nblocks += 1;
+
+    for (int i = 0; i < par->L; i++)
+    {
+      correlations[i] += block_correlations[i];
+    }
   }
 
   datafile.avg_e /= datafile.nblocks;
@@ -44,6 +54,12 @@ datafile_t read_file(FILE* f, Par* par)
   datafile.avg_m2 /= datafile.nblocks;
   datafile.avg_m4 /= datafile.nblocks;
   datafile.correlations = correlations;
+  for (int i = 0; i < par->L; i++)
+  {
+    correlations[i] /= datafile.nblocks;
+  }
+
+  free(block_correlations);
 
   return datafile;
 }
@@ -104,7 +120,7 @@ int main(int argc, char *argv[])
     //  Also print correlations
     char corrname[256] = {0};
     #ifndef TRI
-    sprintf(corrname, "spincorr/tri_L%d_T%8f.txt", par->L, par->t);
+    sprintf(corrname, "spincorr/L%d_T%8f.txt", par->L, par->t);
     #else
     sprintf(corrname, "spincorr/tri_L%d_T%8f.txt", par->L, par->t);
     #endif
