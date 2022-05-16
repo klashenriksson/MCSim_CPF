@@ -1,7 +1,7 @@
 
 INCLUDES = -I../g2/include -L../g2
 LIBS = -lm
-CFLAGS = -std=c99 -DCORR -DCLU -O3
+CFLAGS = -std=c99 -DCORR -DCLU -DTRI -O3
 
 SRC = ../src/ran.c ../src/config.c ../src/ising.c ../src/corr.c ../src/int_queue.c ../src/data.c
 
