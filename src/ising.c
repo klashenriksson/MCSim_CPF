@@ -78,15 +78,18 @@ double sum_neighbor_spins(Par* par, int x, int y, int my_spin, int* spin)
   const int xright = x+1;
   const int ydown = y-1;
   const int yup = y+1;
-
   const int neighbors[] = {
     xleft, y, 
     xright, y, 
     x, yup, 
-    x, ydown
+    x, ydown,
+    #ifdef TRI
+    xleft, yup,
+    xright, ydown,
+    #endif
   };
 
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < sizeof(neighbors)/sizeof(int)/2; i++)
   {
     const int* pos = &neighbors[i * 2];
     int x_wrapped = wrap(pos[0], 0, L-1);
