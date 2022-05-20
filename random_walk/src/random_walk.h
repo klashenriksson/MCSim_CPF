@@ -4,7 +4,7 @@
 #define FNAMESIZE 64
 
 typedef struct result {
-
+  double S2;
 } result_t;
 
 typedef struct Par {

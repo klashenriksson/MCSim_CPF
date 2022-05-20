@@ -5,22 +5,23 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include "ising.h"
+#include "random_walk.h"
+#include "data.h"
 
 
 
-int write_config(Par *par, int *spin, char *fname)
+int write_config(Par *par, int *walk_buff, char *fname)
 {
-  int L2 = par->L * par->L, fdesc;
+  create_if_not_exists("conf/");
   char filename[FNAMESIZE + 5] = "conf/";
   strcat(filename, fname);
-  fdesc = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+  int fdesc = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (fdesc < 0) {
     printf("Can't open %s\n", filename);
     return 0;
   }
  
-  int nw = write(fdesc, spin, L2 * sizeof(int));
+  int nw = write(fdesc, walk_buff, par->N * 2 * sizeof(int));
   close(fdesc);
 
   return 1;
@@ -38,13 +39,13 @@ int filebytes(int fdesc)
 }
 
 
-int read_config(Par *par, int *spin, char *fname)
+int read_config(Par *par, int *walk_buff, char *fname)
 {
-  int L2 = par->L * par->L, bytes, st, fdesc;
+  int bytes, st, fdesc;
   char filename[FNAMESIZE + 5] = "conf/";
 
   strcat(filename, fname);
-  bytes = L2 * sizeof(int);
+  bytes = par->N * 2 * sizeof(int);
 
   printf("Read config file %s", filename);
 
@@ -57,7 +58,7 @@ int read_config(Par *par, int *spin, char *fname)
 
   // Check file size
   if (bytes == filebytes(fdesc)) {
-    int nr = read(fdesc, spin, bytes);
+    int nr = read(fdesc, walk_buff, bytes);
     printf(".\n");
     st = 1;
   }

@@ -8,11 +8,44 @@
 #include "ran.h"
 #include "random_walk.h"
 
+#include "data.h"
 
 #ifndef min
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
+typedef struct ivec2d {
+  int x;
+  int y;
+} ivec2d_t;
+
+int ivec_dot(ivec2d_t a, ivec2d_t b)
+{
+  return a.x * b.x + a.y * b.y;
+}
+
+int ivec_mag2(ivec2d_t a)
+{
+  return ivec_dot(a,a);
+}
+
+ivec2d_t ivec_new(int x, int y)
+{
+  ivec2d_t r;
+  r.x = x;
+  r.y = y;
+  return r;
+}
+
+ivec2d_t ivec_add(ivec2d_t a, ivec2d_t b)
+{
+  return ivec_new(a.x + b.x, a.y + b.y);
+}
+
+int ivec_equal(ivec2d_t a, ivec2d_t b)
+{
+  return a.x == b.x && a.y == b.y ? 1 : 0;
+}
 
 // Global variables
 char fname[FNAMESIZE];	// Name for config files
@@ -32,26 +65,116 @@ int wrap(int x, int min, int max)
   return x;
 }
 
-void measure(Par *par)
+void measure(Par *par, int* walk_buff, double* out_s2)
 {
+  *out_s2 = 0.f;
 
+  int D_x = 0;
+  int D_y = 0;
+  for (int i = 0; i < par->N; i++)
+  {
+    int x_i = walk_buff[i * 2];
+    int y_i = walk_buff[i * 2 + 1];
+    D_x += x_i;
+    D_y += y_i;
+  }
+
+  *out_s2 = D_x*D_x + D_y*D_y;
 }
 
 
-result_t result(Par *par, int ntot, int final)
+result_t result(Par *par, double s2, int ntot, int final)
 {
+  double s2_mean = s2 / ntot;
+
   if (final)
   {
     printf("  --------  --------  --------\n");
   }
+  printf("  %8f\n", s2_mean);
 
   result_t r;
+  r.S2 = s2_mean;
 
   return r;
 }
 
-int update(Par* par, int* spin, int draw)
+int is_visited(int* walk_buff, int N, ivec2d_t pos)
 {
+  ivec2d_t p = ivec_new(0,0);
+  for (int i = 0; i < N; i++)
+  {
+
+    if (ivec_equal(p, pos)) {
+      return 1;
+    }
+
+    int d_x = walk_buff[i*2];
+    int d_y = walk_buff[i * 2 + 1];
+
+    p = ivec_add(p, ivec_new(d_x, d_y));
+  }
+
+  return 0;
+}
+
+int update(Par* par, int* walk_buff)
+{
+  const ivec2d_t abs_dirs[] = {
+    {1, 0},
+    {-1, 0},
+    {0, 1},
+    {0, -1}
+  };
+  const int n_abs_dirs = sizeof(abs_dirs)/sizeof(ivec2d_t);
+
+  const ivec2d_t relative_dirs[] = {
+    {1, 0},// forward
+    {0, 1}, // right
+    {0, -1}, // left
+  };
+  const int n_rel_dirs = sizeof(relative_dirs)/sizeof(ivec2d_t);
+
+  // generate initial direction where all dirs all valid!
+  unsigned int abs_r = uran() % n_abs_dirs;
+  ivec2d_t dir = abs_dirs[abs_r];
+
+  walk_buff[0] = dir.x;
+  walk_buff[1] = dir.y;
+
+  ivec2d_t old_pos = ivec_new(0,0);
+  ivec2d_t new_pos = dir;
+
+  for (int i = 1; i < par->N; i++)
+  {
+    unsigned int rel_idx = uran() % n_rel_dirs;
+    ivec2d_t rel_dir = relative_dirs[rel_idx];
+    ivec2d_t heading = dir;
+
+    if (dir.x == 0 && dir.y == 1) { //heading up
+      dir.x = rel_dir.y;
+      dir.y = rel_dir.x;
+    } else if (dir.x == 0 && dir.y == -1) { //heading down
+      dir.x = -rel_dir.y;
+      dir.y = -rel_dir.x;
+    } else if (dir.x == 1 && dir.y == 0) { //heading right
+      dir.x = rel_dir.x;
+      dir.y = -rel_dir.y;
+    } else if (dir.x== -1 && dir.y == 0) { //heading left
+      dir.x = -rel_dir.x;
+      dir.y = rel_dir.y;
+    }
+
+    old_pos = new_pos;
+    new_pos = ivec_add(new_pos, dir);
+    if (is_visited(walk_buff, i-1, new_pos)) {
+      return 0;
+    }
+
+    walk_buff[i*2] = dir.x;
+    walk_buff[i*2 + 1] = dir.y;
+  }
+
   return 0;
 }
 
@@ -76,15 +199,14 @@ void check_data_file(Par* par) {
   }
 }
 
-int mc(Par *par, int *spin)
+int mc(Par *par, int *walk_buff)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
-  double t = par->t, acc, accept = 0.0, L2 = par->L * par->L;
-  double energy = 0.0, energy_sqrd = 0.0, magnetization = 0.0, mag2 = 0.0, mag4 = 0.0;
+  double acc, accept = 0.0;
 
 
   // *** Read in the configuration for the present parameters if already present.
-  if (read_config(par, spin, fname))
+  if (read_config(par, walk_buff, fname))
     ntherm = 0;
 
   char datafilename[256] = {0};
@@ -97,23 +219,14 @@ int mc(Par *par, int *spin)
   }
 
   // *** Write out information about the run: size, temperature,...
-#ifdef CLU
-  printf("2D Ising model with the Wolff cluster algorithm.\n");
-  par->queue = int_queue_create(L2);
-#else
-  printf("2D Ising model with the Metropolis algorithm.\n");
-#endif
+  printf("2D Lattice Random Walk modelm.\n");
 
-#ifdef TRI
-  printf("Using Triangular lattice.\n");
-#endif
-
-  printf("\n====    %d x %d     T = %g    ====\n", par->L, par->L, par->t);
+  printf("\n====    N = %d    ====\n", par->N);
   printf("\nntherm  nblock   nsamp   seed\n");
   printf(" %5d   %5d   %5d   %d\n", ntherm, par->nblock, par->nsamp, par->seed);
 
   
-  printf("\n energy      cv        magn     \n");
+  printf("\n  S2\n");
 
   #ifdef CORR
   corr_t corr = corr_create(par->nblock * par->nsamp);
@@ -121,51 +234,30 @@ int mc(Par *par, int *spin)
 
   // Thermalize the system 
   for (i = 0; i < ntherm; i++)
-    update(par, spin, 0);
+    update(par, walk_buff);
 
-  #ifdef DRAW_GRAPHICS
-  int num_imgs = 5;
-  int total_iterations = par->nblock * par->nsamp;
-  int iteration_quotient = total_iterations/num_imgs; 
-  #endif
-
-  double* block_spin_corrs = malloc(sizeof(double)*par->L);
-
+  double s2 = 0.f;
   for (iblock = 0; iblock < par->nblock; iblock++) {
-    double block_energy = 0.;
-    double block_energy_sqrd = 0.;
-    double block_magnetization = 0.;
-    double block_mag2 = 0.;
-    double block_mag4 = 0.;
-
-    for (int i = 0; i < par->L; i++)
-    {
-      block_spin_corrs[i] = 0.f;
-    }
-
+    double block_s2 = 0.f;
     for (isamp = 0; isamp < par->nsamp; isamp++) {
-      int iteration = iblock*par->nsamp + isamp;
-      #ifdef DRAW_GRAPHICS
-      if (iteration % iteration_quotient == 0 || iteration == total_iterations-1)
-      {
-        draw_model(par, spin, iteration);
-      }
-      #endif
+      double sample_s2 = 0.f;
+      accept += update(par, walk_buff);
+      measure(par, walk_buff, &sample_s2);
 
-      accept += update(par, spin, iteration == 0 ? 1 : 0);
-      
-      measure(par, spin, &sample_energy, &sample_magnetization);
+      block_s2 += sample_s2;
     }
 
-    write_config(par, spin, fname);
-    result_t r = result(par, block_energy, block_energy_sqrd, block_magnetization, block_mag2, block_mag4, par->nsamp, 0);
+    write_config(par, walk_buff, fname);
+    result_t r = result(par, block_s2, par->nsamp, 0);
     datafile_write_block_results(data_file, r, iblock);
+
+    s2 += block_s2;
   }
-  result(par, energy, energy_sqrd, magnetization, mag2, mag4, par->nblock * par->nsamp, 1);
+  result(par, s2, par->nblock * par->nsamp, 1);
 
   fclose(data_file);
 
-  acc = accept * 100.0 / (L2 * par->nblock * par->nsamp);
+  acc = 0;
   printf("\nAcceptance: %5.2f\n", acc);
 
   return 1;
@@ -181,8 +273,6 @@ int initialize_mc(Par *par, int *walk_buff) {
 
 
   init_ran(par->seed);
-
-  init_tables(par);
 
   sprintf(fname, "%d", par->N);
 
@@ -212,8 +302,8 @@ int read_args(Par *par, char *arg)
 
   if (!strcmp(arg, "N")) {
     par->N = strtod(s, NULL);
-    walk_buff = realloc(walk_buff, par->N * sizeof(int));
-    par->ntherm = 1000;
+    walk_buff = realloc(walk_buff, par->N * sizeof(int) * 2);
+    par->ntherm = 0;
 
     return 1;
   }
@@ -247,8 +337,6 @@ int read_args(Par *par, char *arg)
   return 0;
 }
 
-
-
 int main(int argc, char *argv[])
 {
   int i, iarg;
@@ -259,7 +347,7 @@ int main(int argc, char *argv[])
   par->nsamp = 10000;
 
   if (argc == 1) {
-    printf("Usage: %s L=16 T=2.26\n", argv[0]);
+    printf("Usage: %s N=16\n", argv[0]);
     printf("Optional arguments (with defaults) nblock=%d nsamp=%d ntherm=%d seed=%d\n",
 	   par->nblock, par->nsamp, par->ntherm, par->seed);
     exit(EXIT_SUCCESS);
