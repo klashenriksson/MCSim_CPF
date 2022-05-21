@@ -6,6 +6,7 @@
 #include <unistd.h>
 #endif
 #include <sys/stat.h>
+#include <math.h>
 
 #include "data.h"
 

@@ -65,21 +65,19 @@ int wrap(int x, int min, int max)
   return x;
 }
 
-void measure(Par *par, int* walk_buff, double* out_s2)
+int is_visited(int* walk_buff, int L, ivec2d_t pos)
 {
-  *out_s2 = 0.f;
+  return walk_buff[wrap(pos.x, 0, L-1) + wrap(pos.y, 0, L-1)*L] == 1;
+}
 
-  int D_x = 0;
-  int D_y = 0;
-  for (int i = 0; i < par->N; i++)
-  {
-    int x_i = walk_buff[i * 2];
-    int y_i = walk_buff[i * 2 + 1];
-    D_x += x_i;
-    D_y += y_i;
-  }
+void set_visited(int* walk_buff, int L, ivec2d_t pos)
+{
+  walk_buff[wrap(pos.x, 0, L-1) + wrap(pos.y,0,L-1)*L] = 1;
+}
 
-  *out_s2 = D_x*D_x + D_y*D_y;
+void measure(Par *par, int* walk_buff, int steps, double* out_s2)
+{
+  *out_s2 = steps;
 }
 
 
@@ -99,27 +97,29 @@ result_t result(Par *par, double s2, int ntot, int final)
   return r;
 }
 
-int is_visited(int* walk_buff, int N, ivec2d_t pos)
+ivec2d_t dir_rel_to_abs(ivec2d_t curr_dir, ivec2d_t rel_dir)
 {
-  ivec2d_t p = ivec_new(0,0);
-  for (int i = 0; i < N; i++)
-  {
-
-    if (ivec_equal(p, pos)) {
-      return 1;
-    }
-
-    int d_x = walk_buff[i*2];
-    int d_y = walk_buff[i * 2 + 1];
-
-    p = ivec_add(p, ivec_new(d_x, d_y));
+  ivec2d_t dir;
+  if (curr_dir.x == 0 && curr_dir.y == 1) { //heading downm
+    dir.x = rel_dir.y;
+    dir.y = rel_dir.x;
+  } else if (curr_dir.x == 0 && curr_dir.y == -1) { //heading up
+    dir.x = -rel_dir.y;
+    dir.y = -rel_dir.x;
+  } else if (curr_dir.x == 1 && curr_dir.y == 0) { //heading right
+    dir.x = rel_dir.x;
+    dir.y = rel_dir.y;
+  } else if (curr_dir.x == -1 && curr_dir.y == 0) { //heading left
+    dir.x = -rel_dir.x;
+    dir.y = -rel_dir.y;
   }
-
-  return 0;
+  return dir;
 }
 
 int update(Par* par, int* walk_buff)
 {
+  int L2 = par->L * par->L;
+  memset(walk_buff, 0, L2 * sizeof(int));
   const ivec2d_t abs_dirs[] = {
     {1, 0},
     {-1, 0},
@@ -139,43 +139,56 @@ int update(Par* par, int* walk_buff)
   unsigned int abs_r = uran() % n_abs_dirs;
   ivec2d_t dir = abs_dirs[abs_r];
 
-  walk_buff[0] = dir.x;
-  walk_buff[1] = dir.y;
+  ivec2d_t old_pos = ivec_new(par->L/2,par->L/2);
+  ivec2d_t new_pos = ivec_add(old_pos, dir);
 
-  ivec2d_t old_pos = ivec_new(0,0);
-  ivec2d_t new_pos = dir;
+  set_visited(walk_buff, par->L, old_pos);
+  set_visited(walk_buff, par->L, new_pos);
 
-  for (int i = 1; i < par->N; i++)
+  int N = par->N;
+  int steps = 1;
+  while (steps < N)
   {
     unsigned int rel_idx = uran() % n_rel_dirs;
     ivec2d_t rel_dir = relative_dirs[rel_idx];
     ivec2d_t heading = dir;
-
-    if (dir.x == 0 && dir.y == 1) { //heading up
-      dir.x = rel_dir.y;
-      dir.y = rel_dir.x;
-    } else if (dir.x == 0 && dir.y == -1) { //heading down
-      dir.x = -rel_dir.y;
-      dir.y = -rel_dir.x;
-    } else if (dir.x == 1 && dir.y == 0) { //heading right
-      dir.x = rel_dir.x;
-      dir.y = -rel_dir.y;
-    } else if (dir.x== -1 && dir.y == 0) { //heading left
-      dir.x = -rel_dir.x;
-      dir.y = rel_dir.y;
-    }
+    dir = dir_rel_to_abs(dir, rel_dir);
 
     old_pos = new_pos;
     new_pos = ivec_add(new_pos, dir);
-    if (is_visited(walk_buff, i-1, new_pos)) {
-      return 0;
+    if (is_visited(walk_buff, par->L, new_pos)) {
+        return -1;
     }
 
-    walk_buff[i*2] = dir.x;
-    walk_buff[i*2 + 1] = dir.y;
+    set_visited(walk_buff, par->L, new_pos);
+    steps++;
+
+    ivec2d_t nbor_0 = ivec_add(new_pos, abs_dirs[0]);
+    ivec2d_t nbor_1 = ivec_add(new_pos, abs_dirs[1]);
+    ivec2d_t nbor_2 = ivec_add(new_pos, abs_dirs[2]);
+    ivec2d_t nbor_3 = ivec_add(new_pos, abs_dirs[3]);
+    if (is_visited(walk_buff, par->L, nbor_0) && 
+        is_visited(walk_buff, par->L, nbor_1) &&
+        is_visited(walk_buff, par->L, nbor_2) &&
+        is_visited(walk_buff, par->L, nbor_3))
+    {
+      //hard stuck
+      /*for (int i = 0; i < par->L*par->L; i++)
+      {
+        int x = i % par->L;
+        int y = i / par->L;
+        ivec2d_t p = ivec_new(x,y);
+        if (is_visited(walk_buff, par->L, p))
+        {
+          printf("v: %d, %d\n", p.x, p.y);
+        }
+      }
+      printf("-- %d\n", steps);*/
+      return steps;
+    }
   }
 
-  return 0;
+  return steps;
 }
 
 void fwrite_par(FILE* f, Par* par) 
@@ -202,8 +215,6 @@ void check_data_file(Par* par) {
 int mc(Par *par, int *walk_buff)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
-  double acc, accept = 0.0;
-
 
   // *** Read in the configuration for the present parameters if already present.
   if (read_config(par, walk_buff, fname))
@@ -219,13 +230,13 @@ int mc(Par *par, int *walk_buff)
   }
 
   // *** Write out information about the run: size, temperature,...
-  printf("2D Lattice Random Walk modelm.\n");
+  printf("2D Lattice Random Walk model.\n");
 
   printf("\n====    N = %d    ====\n", par->N);
   printf("\nntherm  nblock   nsamp   seed\n");
   printf(" %5d   %5d   %5d   %d\n", ntherm, par->nblock, par->nsamp, par->seed);
 
-  
+
   printf("\n  S2\n");
 
   #ifdef CORR
@@ -238,27 +249,30 @@ int mc(Par *par, int *walk_buff)
 
   double s2 = 0.f;
   for (iblock = 0; iblock < par->nblock; iblock++) {
+    int samples = par->nsamp;
     double block_s2 = 0.f;
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       double sample_s2 = 0.f;
-      accept += update(par, walk_buff);
-      measure(par, walk_buff, &sample_s2);
+      int steps = update(par, walk_buff);
+      if (steps == -1) {
+        //discard this sample
+        samples--;
+        continue;
+      }
+      measure(par, walk_buff, steps, &sample_s2);
 
       block_s2 += sample_s2;
     }
 
+    printf("nsamps used: %d\n", samples);
     write_config(par, walk_buff, fname);
-    result_t r = result(par, block_s2, par->nsamp, 0);
+    result_t r = result(par, block_s2, samples, 0);
     datafile_write_block_results(data_file, r, iblock);
 
     s2 += block_s2;
   }
-  result(par, s2, par->nblock * par->nsamp, 1);
 
   fclose(data_file);
-
-  acc = 0;
-  printf("\nAcceptance: %5.2f\n", acc);
 
   return 1;
 }
@@ -266,7 +280,7 @@ int mc(Par *par, int *walk_buff)
 int initialize_mc(Par *par, int *walk_buff) {
   char *f2;
 
-  if (!par->N) {
+  if (!par->L) {
     printf("Give walk length N!\n");
     return 0;
   }
@@ -274,7 +288,7 @@ int initialize_mc(Par *par, int *walk_buff) {
 
   init_ran(par->seed);
 
-  sprintf(fname, "%d", par->N);
+  sprintf(fname, "%d", par->L);
 
   check_data_file(par);
 
@@ -302,7 +316,8 @@ int read_args(Par *par, char *arg)
 
   if (!strcmp(arg, "N")) {
     par->N = strtod(s, NULL);
-    walk_buff = realloc(walk_buff, par->N * sizeof(int) * 2);
+    par->L = par->N*2 + 1;
+    walk_buff = realloc(walk_buff, par->L * par->L * sizeof(int));
     par->ntherm = 0;
 
     return 1;
@@ -342,6 +357,7 @@ int main(int argc, char *argv[])
   int i, iarg;
   Par *par = malloc(sizeof(Par));
 
+  par->L = 0;
   par->N = 0;
   par->nblock = 1;
   par->nsamp = 10000;

@@ -21,7 +21,7 @@ int write_config(Par *par, int *walk_buff, char *fname)
     return 0;
   }
  
-  int nw = write(fdesc, walk_buff, par->N * 2 * sizeof(int));
+  int nw = write(fdesc, walk_buff, par->L * par->L * sizeof(int));
   close(fdesc);
 
   return 1;
@@ -45,7 +45,7 @@ int read_config(Par *par, int *walk_buff, char *fname)
   char filename[FNAMESIZE + 5] = "conf/";
 
   strcat(filename, fname);
-  bytes = par->N * 2 * sizeof(int);
+  bytes = par->L * par->L * sizeof(int);
 
   printf("Read config file %s", filename);
 

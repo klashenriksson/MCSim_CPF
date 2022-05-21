@@ -8,6 +8,7 @@ typedef struct result {
 } result_t;
 
 typedef struct Par {
+  int L;
   int N;
   int seed;
   int ntherm;
