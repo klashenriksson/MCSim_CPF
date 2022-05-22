@@ -35,7 +35,7 @@ datafile_t read_file(FILE* f, Par* par)
 void result(Par *par, datafile_t* df)
 {
   double s2_variance = 1.0/(fmax(df->nblocks-1,1)) * (df->avg_block_s4 - df->avg_s2*df->avg_s2);
-  printf("N %d s2 %8f s2_variance\n", par->N, df->avg_s2, s2_variance);
+  printf("N %d s2 %8f s2_variance %8f\n", par->N, df->avg_s2, s2_variance);
 }
 
 int main(int argc, char *argv[])

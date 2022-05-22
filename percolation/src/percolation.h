@@ -1,0 +1,22 @@
+#ifndef PERCOLATION_H
+#define PERCOLATION_H
+
+#define FNAMESIZE 64
+
+typedef struct result {
+  double S2;
+} result_t;
+
+typedef struct Par {
+  int L;
+  int seed;
+  int ntherm;
+  int nblock;
+  int nsamp;
+} Par;
+
+// In config.c
+extern int write_config(Par *par, int *spin, char *fname);
+extern int read_config(Par *par, int *spin, char *fname);
+
+#endif

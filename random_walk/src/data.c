@@ -22,7 +22,11 @@ void deserialize_par(FILE* f, Par* out_par)
 
 void datafile_get_filename(Par* par, char* filename_buff)
 {
+  #ifndef SURV_BIAS
   sprintf(filename_buff, "data/data_N%d.txt", par->N);
+  #else
+  sprintf(filename_buff, "data/data_surv_bias_N%d.txt", par->N);
+  #endif
 }
 
 void datafile_write_block_results(FILE* datafile, result_t r, int block)

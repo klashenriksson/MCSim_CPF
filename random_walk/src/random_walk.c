@@ -42,6 +42,11 @@ ivec2d_t ivec_add(ivec2d_t a, ivec2d_t b)
   return ivec_new(a.x + b.x, a.y + b.y);
 }
 
+ivec2d_t ivec_sub(ivec2d_t a, ivec2d_t b)
+{
+  return ivec_new(a.x - b.x, a.y - b.y);
+}
+
 int ivec_equal(ivec2d_t a, ivec2d_t b)
 {
   return a.x == b.x && a.y == b.y ? 1 : 0;
@@ -49,6 +54,13 @@ int ivec_equal(ivec2d_t a, ivec2d_t b)
 
 // Global variables
 char fname[FNAMESIZE];	// Name for config files
+
+const ivec2d_t relative_dirs[] = {
+    {1, 0},// forward
+    {0, 1}, // right
+    {0, -1}, // left
+  };
+const int n_rel_dirs = sizeof(relative_dirs)/sizeof(ivec2d_t);
 
 int wrap(int x, int min, int max)
 {
@@ -75,15 +87,15 @@ void set_visited(int* walk_buff, int L, ivec2d_t pos)
   walk_buff[wrap(pos.x, 0, L-1) + wrap(pos.y,0,L-1)*L] = 1;
 }
 
-void measure(Par *par, int* walk_buff, int steps, double* out_s2)
+void measure(Par *par, int* walk_buff, int squared_distance, double w, double* out_s2)
 {
-  *out_s2 = steps;
+  *out_s2 = w*squared_distance;
 }
 
 
-result_t result(Par *par, double s2, int ntot, int final)
+result_t result(Par *par, double s2, double w_tot, int final)
 {
-  double s2_mean = s2 / ntot;
+  double s2_mean = s2 / w_tot;
 
   if (final)
   {
@@ -116,6 +128,77 @@ ivec2d_t dir_rel_to_abs(ivec2d_t curr_dir, ivec2d_t rel_dir)
   return dir;
 }
 
+#ifdef SURV_BIAS
+int get_valid_dirs(int* walk_buff, ivec2d_t* rel_dirs, int L, ivec2d_t pos, ivec2d_t abs_dir)
+{
+  int valid_dirs = 0;
+  for (int i = 0; i < n_rel_dirs; i++)
+  {
+    ivec2d_t rdir = relative_dirs[i];
+    ivec2d_t dir = dir_rel_to_abs(abs_dir, rdir);
+    ivec2d_t p = ivec_add(pos, dir);
+    if (!is_visited(walk_buff, L, p))
+    {
+      rel_dirs[valid_dirs] = rdir;
+      valid_dirs++;
+    }
+  }
+
+  return valid_dirs;
+}
+
+int update(Par* par, int* walk_buff, double* out_w)
+{
+  int L2 = par->L * par->L;
+  memset(walk_buff, 0, L2 * sizeof(int));
+  const ivec2d_t abs_dirs[] = {
+    {1, 0},
+    {-1, 0},
+    {0, 1},
+    {0, -1}
+  };
+  const int n_abs_dirs = sizeof(abs_dirs)/sizeof(ivec2d_t);
+
+  const ivec2d_t origin = {par->L/2,par->L/2};
+
+  // generate initial direction where all dirs all valid!
+  unsigned int abs_r = uran() % n_abs_dirs;
+  ivec2d_t dir = abs_dirs[abs_r];
+
+  ivec2d_t old_pos = origin;
+  ivec2d_t new_pos = ivec_add(old_pos, dir);
+
+  set_visited(walk_buff, par->L, old_pos);
+  set_visited(walk_buff, par->L, new_pos);
+
+  int N = par->N;
+  int steps = 1;
+  double w = 1.f;
+  while (steps < N)
+  {
+    unsigned int r = uran();
+    ivec2d_t valid_rel_dirs[3] = {0};
+    int n_valid_rel_dirs = get_valid_dirs(walk_buff, valid_rel_dirs, par->L, new_pos, dir);
+    if (n_valid_rel_dirs == 0)
+    {
+      return -1;
+    }
+    ivec2d_t rel_dir = valid_rel_dirs[r % n_valid_rel_dirs];
+    dir = dir_rel_to_abs(dir, rel_dir);
+    double w_i = (double)n_valid_rel_dirs/(double)n_rel_dirs;
+    w *= w_i;
+
+    old_pos = new_pos;
+    new_pos = ivec_add(new_pos, dir);
+
+    set_visited(walk_buff, par->L, new_pos);
+    steps++;
+  }
+
+  *out_w = w;
+  return ivec_mag2(ivec_sub(origin, new_pos));
+}
+#else
 int update(Par* par, int* walk_buff)
 {
   int L2 = par->L * par->L;
@@ -128,18 +211,13 @@ int update(Par* par, int* walk_buff)
   };
   const int n_abs_dirs = sizeof(abs_dirs)/sizeof(ivec2d_t);
 
-  const ivec2d_t relative_dirs[] = {
-    {1, 0},// forward
-    {0, 1}, // right
-    {0, -1}, // left
-  };
-  const int n_rel_dirs = sizeof(relative_dirs)/sizeof(ivec2d_t);
+  const ivec2d_t origin = {par->L/2,par->L/2};
 
   // generate initial direction where all dirs all valid!
   unsigned int abs_r = uran() % n_abs_dirs;
   ivec2d_t dir = abs_dirs[abs_r];
 
-  ivec2d_t old_pos = ivec_new(par->L/2,par->L/2);
+  ivec2d_t old_pos = origin;
   ivec2d_t new_pos = ivec_add(old_pos, dir);
 
   set_visited(walk_buff, par->L, old_pos);
@@ -149,47 +227,25 @@ int update(Par* par, int* walk_buff)
   int steps = 1;
   while (steps < N)
   {
-    unsigned int rel_idx = uran() % n_rel_dirs;
-    ivec2d_t rel_dir = relative_dirs[rel_idx];
+    unsigned int r = uran();
+    ivec2d_t rel_dir = relative_dirs[r % n_rel_dirs];
     ivec2d_t heading = dir;
     dir = dir_rel_to_abs(dir, rel_dir);
 
     old_pos = new_pos;
     new_pos = ivec_add(new_pos, dir);
+
     if (is_visited(walk_buff, par->L, new_pos)) {
         return -1;
     }
 
     set_visited(walk_buff, par->L, new_pos);
     steps++;
-
-    ivec2d_t nbor_0 = ivec_add(new_pos, abs_dirs[0]);
-    ivec2d_t nbor_1 = ivec_add(new_pos, abs_dirs[1]);
-    ivec2d_t nbor_2 = ivec_add(new_pos, abs_dirs[2]);
-    ivec2d_t nbor_3 = ivec_add(new_pos, abs_dirs[3]);
-    if (is_visited(walk_buff, par->L, nbor_0) && 
-        is_visited(walk_buff, par->L, nbor_1) &&
-        is_visited(walk_buff, par->L, nbor_2) &&
-        is_visited(walk_buff, par->L, nbor_3))
-    {
-      //hard stuck
-      /*for (int i = 0; i < par->L*par->L; i++)
-      {
-        int x = i % par->L;
-        int y = i / par->L;
-        ivec2d_t p = ivec_new(x,y);
-        if (is_visited(walk_buff, par->L, p))
-        {
-          printf("v: %d, %d\n", p.x, p.y);
-        }
-      }
-      printf("-- %d\n", steps);*/
-      return steps;
-    }
   }
 
-  return steps;
+  return ivec_mag2(ivec_sub(origin, new_pos));
 }
+#endif
 
 void fwrite_par(FILE* f, Par* par) 
 {
@@ -230,7 +286,11 @@ int mc(Par *par, int *walk_buff)
   }
 
   // *** Write out information about the run: size, temperature,...
+  #ifndef SURV_BIAS
   printf("2D Lattice Random Walk model.\n");
+  #else
+  printf("2D Lattice Random Walk model (survival bias).\n");
+  #endif
 
   printf("\n====    N = %d    ====\n", par->N);
   printf("\nntherm  nblock   nsamp   seed\n");
@@ -239,37 +299,36 @@ int mc(Par *par, int *walk_buff)
 
   printf("\n  S2\n");
 
-  #ifdef CORR
-  corr_t corr = corr_create(par->nblock * par->nsamp);
-  #endif
-
-  // Thermalize the system 
-  for (i = 0; i < ntherm; i++)
-    update(par, walk_buff);
-
-  double s2 = 0.f;
   for (iblock = 0; iblock < par->nblock; iblock++) {
     int samples = par->nsamp;
+    double tot_w = 0.f;
     double block_s2 = 0.f;
+
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       double sample_s2 = 0.f;
-      int steps = update(par, walk_buff);
-      if (steps == -1) {
+      double sample_w = 1.f;
+      #ifdef SURV_BIAS
+      int squared_distance = update(par, walk_buff, &sample_w);
+      #else
+      int squared_distance = update(par, walk_buff);
+      #endif
+      
+      if (squared_distance == -1) {
         //discard this sample
         samples--;
         continue;
       }
-      measure(par, walk_buff, steps, &sample_s2);
+
+      measure(par, walk_buff, squared_distance, sample_w, &sample_s2);
 
       block_s2 += sample_s2;
+      tot_w += sample_w;
     }
 
     printf("nsamps used: %d\n", samples);
     write_config(par, walk_buff, fname);
-    result_t r = result(par, block_s2, samples, 0);
+    result_t r = result(par, block_s2, tot_w, 0);
     datafile_write_block_results(data_file, r, iblock);
-
-    s2 += block_s2;
   }
 
   fclose(data_file);

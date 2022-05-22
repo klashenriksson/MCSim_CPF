@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "percolation.h": "c",
+        "data.h": "c"
+    }
+}

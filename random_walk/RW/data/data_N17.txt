@@ -1,5 +1,0 @@
-N 17 nblock 1 nsamp 10000 ntherm 0 seed 0
-block 0 S2 17.000000
-block 0 S2 16.860477
-block 0 S2 17.000000
-block 0 S2 15.525126

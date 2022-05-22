@@ -7,9 +7,8 @@ make: *** No rule to make target 'all'.  Stop.
 # License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
- 
 
-# Make data base, printed on Sat May 21 20:34:18 2022
+# Make data base, printed on Sun May 22 21:01:37 2022
 
 # Variables
 
@@ -44,7 +43,7 @@ VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/vscode-ipc-24a48e87-a5b0-4bea-beb5-99fc45839bf6.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/vscode-ipc-827589bc-cf67-4d60-a931-87d678dc7eb9.sock
 # environment
 VSCODE_CWD = /
 # default
@@ -74,7 +73,7 @@ VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
 # environment
 HOME = /Users/99klhe01
 # environment
-VSCODE_CODE_CACHE_PATH = /Users/99klhe01/Library/Application Support/Code/CachedData/da15b6fd3ef856477bf6f4fb29ba1b7af717770d
+VSCODE_CODE_CACHE_PATH = /Users/99klhe01/Library/Application Support/Code/CachedData/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5
 # environment
 LOGNAME = 99klhe01
 # environment
@@ -85,7 +84,6 @@ VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 ^D = $(patsubst %/,%,$(dir $^))
 # environment
 MAKELEVEL := 0
- 
 # environment
 XPC_FLAGS = 0x0
 # default
@@ -113,7 +111,7 @@ TMPDIR = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/
 # automatic
 *F = $(notdir $*)
 # environment
-VSCODE_IPC_HOOK = /Users/99klhe01/Library/Application Support/Code/1.67.1-main.sock
+VSCODE_IPC_HOOK = /Users/99klhe01/Library/Application Support/Code/1.67.2-main.sock
 # makefile
 MAKEFLAGS = pqrR
 # environment
@@ -147,7 +145,7 @@ SUFFIXES :=
 # environment
 LANG = C
 # environment
-VSCODE_PID = 23351
+VSCODE_PID = 97803
 # variable set hash-table stats:
 # Load=67/1024=7%, Rehash=0, Collisions=3/87=3%
 
@@ -159,7 +157,6 @@ VSCODE_PID = 23351
 
 # . (device 16777220, inode 40342932): 6 files, no impossibilities.
 
- 
 # 6 files, no impossibilities in 1 directories.
 
 # Implicit Rules
@@ -216,6 +213,6 @@ GNUmakefile:
 # strcache performance: lookups = 16 / hit rate = 18%
 # hash-table stats:
 # Load=13/8192=0%, Rehash=0, Collisions=1/16=6%
-# Finished Make data base on Sat May 21 20:34:18 2022
+# Finished Make data base on Sun May 22 21:01:37 2022
 
  

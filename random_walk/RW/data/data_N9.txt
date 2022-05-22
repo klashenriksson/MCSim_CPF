@@ -1,3 +1,0 @@
-N 9 nblock 1 nsamp 10000 ntherm 0 seed 0
-block 0 S2 8.999100
-block 0 S2 9.000000
