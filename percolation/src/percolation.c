@@ -7,6 +7,7 @@
 
 #include "ran.h"
 #include "percolation.h"
+#include "int_queue.h"
 
 #include "data.h"
 
@@ -14,53 +15,46 @@
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-typedef struct ivec2d {
-  int x;
-  int y;
-} ivec2d_t;
-
-int ivec_dot(ivec2d_t a, ivec2d_t b)
-{
-  return a.x * b.x + a.y * b.y;
-}
-
-int ivec_mag2(ivec2d_t a)
-{
-  return ivec_dot(a,a);
-}
-
-ivec2d_t ivec_new(int x, int y)
-{
-  ivec2d_t r;
-  r.x = x;
-  r.y = y;
-  return r;
-}
-
-ivec2d_t ivec_add(ivec2d_t a, ivec2d_t b)
-{
-  return ivec_new(a.x + b.x, a.y + b.y);
-}
-
-ivec2d_t ivec_sub(ivec2d_t a, ivec2d_t b)
-{
-  return ivec_new(a.x - b.x, a.y - b.y);
-}
-
-int ivec_equal(ivec2d_t a, ivec2d_t b)
-{
-  return a.x == b.x && a.y == b.y ? 1 : 0;
-}
-
 // Global variables
 char fname[FNAMESIZE];	// Name for config files
 
-const ivec2d_t relative_dirs[] = {
-    {1, 0},// forward
-    {0, 1}, // right
-    {0, -1}, // left
-  };
-const int n_rel_dirs = sizeof(relative_dirs)/sizeof(ivec2d_t);
+const int nearest_neighbors[] = {
+  #if D == 2
+  1,0,
+  -1,0,
+  0,1,
+  0,-1,
+  #elif D == 3
+  1,0,0,
+  -1,0,0,
+  0,1,0,
+  0,-1,0,
+  0,0,1,
+  0,0,-1,
+  #endif
+};
+#if D == 2
+const int n_neighbors = 4;
+
+#elif D == 3
+const int n_neighbors = 6;
+#endif
+
+const int F_OCCUPIED = 1 << 0;
+const int F_VISITED = 1 << 1;
+
+void get_neighbor_xyz(int n_idx, int* x, int* y, int* z)
+{
+  #if D == 2
+  *x = nearest_neighbors[n_idx*2];
+  *y = nearest_neighbors[n_idx*2 + 1];
+  *z = 0;
+  #elif D == 3
+  *x = nearest_neighbors[n_idx * 3];
+  *y = nearest_neighbors[n_idx * 3 + 1];
+  *z = nearest_neighbors[n_idx * 3 + 2];
+  #endif
+}
 
 int wrap(int x, int min, int max)
 {
@@ -77,58 +71,158 @@ int wrap(int x, int min, int max)
   return x;
 }
 
-void measure(Par *par, int* lattice, int squared_distance, double w, double* out_s2)
+int has_flags(Par* par, int* lattice, int x, int y, int z, int f)
 {
-  *out_s2 = w*squared_distance;
+  x = wrap(x, 0, par->L-1);
+  y = wrap(y, 0, par->L-1);
+  z = wrap(z, 0, par->L-1);
+  #if D == 3
+  return lattice[x + y * par->L + z * par->L * par->L] & f;
+  #elif D == 2
+  return lattice[x + y * par->L] & f;
+  #endif
 }
 
-result_t result(Par *par, double s2, double w_tot, int final)
+void enable_flags(Par* par, int* lattice, int x, int y, int z, int f)
 {
-  double s2_mean = s2 / w_tot;
+  x = wrap(x, 0, par->L-1);
+  y = wrap(y, 0, par->L-1);
+  z = wrap(z, 0, par->L-1);
+  #if D == 3
+  lattice[x + y * par->L + z * par->L * par->L] = f;
+  #elif D == 2
+  lattice[x + y * par->L] |= f;
+  #endif
+}
 
-  if (final)
+void disable_flags(Par* par, int* lattice, int x, int y, int z, int f)
+{
+  x = wrap(x, 0, par->L-1);
+  y = wrap(y, 0, par->L-1);
+  z = wrap(z, 0, par->L-1);
+  #if D == 3
+  lattice[x + y * par->L + z * par->L * par->L] &= ~f;
+  #elif D == 2
+  lattice[x + y * par->L] &= ~f;
+  #endif
+}
+
+void idx2xyz(Par* par, int i, int* x, int* y, int* z)
+{
+  #if D == 3
+  *z = i / (par->L * par->L);
+  *y = (i-z) / par->L;
+  *x = (i-z) % par->L;
+  #elif D == 2
+  *x = i % par->L;
+  *y = i / par->L;
+  *z = 0;
+  #endif
+}
+
+int xyz2idx(Par* par, int x, int y, int z)
+{
+  x = wrap(x, 0, par->L-1);
+  y = wrap(y, 0, par->L-1);
+  z = wrap(z, 0, par->L-1);
+  #if D == 3
+  return x + y*par->L + z *par-L * par->L;
+  #elif D == 2
+  return x + y*par->L;
+  #endif
+}
+
+void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
+{
+  *out_did_percolate = 0;
+  #if D == 2
+  int Ls = par->L * par->L;
+  #elif D == 3
+  int Ls = par->L * par->L * par->L;
+  #endif
+
+  int y_q = 0;
+  int z_loop = 0;
+  for (int x_loop = 0; x_loop < par->L; x_loop++)
   {
-    printf("  --------  --------  --------\n");
+    #if D == 3
+    for (z_loop = 0; z_loop < par->L; z_loop++)
+    {
+    #endif
+
+    if (has_flags(par, lattice, x_loop, y_q, z_loop, F_OCCUPIED))
+    {
+      int idx = x_loop + y_q * par->L + z_loop * par->L * par->L;
+      int_queue_push_back(queue, idx);
+
+      while(int_queue_size(queue) > 0)
+      {
+        idx = int_queue_pop_front(queue);
+        int x,y,z;
+        idx2xyz(par, idx, &x, &y, &z);
+
+        for (int i = 0; i < n_neighbors; i++)
+        {
+          int nx,ny,nz;
+          get_neighbor_xyz(i, &nx, &ny, &nz);
+          nx += x;
+          ny += y;
+          nz += z;
+
+          if (!has_flags(par, lattice, nx,ny,nz, F_OCCUPIED))
+            continue;
+
+          if (has_flags(par, lattice, nx,ny,nz, F_VISITED))
+          {
+            if (ny == par->L)
+            {
+              *out_did_percolate = 1;
+              int_queue_empty(queue);
+              return;
+            }
+          }
+          else
+          {
+            enable_flags(par, lattice, nx,ny,nz, F_VISITED);
+            int_queue_push_back(queue, xyz2idx(par, nx,ny,nz));
+          }
+        }
+      }
+    }
+
+    #if D == 3
+    }
+    #endif
   }
-  printf("  %8f\n", s2_mean);
+}
+
+result_t result(Par *par, double percs, int ntot)
+{
+  double perc_prob = percs / ntot;
+  printf("  %8f\n", perc_prob);
 
   result_t r;
-  r.S2 = s2_mean;
+  r.perc_prob = perc_prob;
 
   return r;
-}
-
-ivec2d_t dir_rel_to_abs(ivec2d_t curr_dir, ivec2d_t rel_dir)
-{
-  ivec2d_t dir;
-  if (curr_dir.x == 0 && curr_dir.y == 1) { //heading downm
-    dir.x = rel_dir.y;
-    dir.y = rel_dir.x;
-  } else if (curr_dir.x == 0 && curr_dir.y == -1) { //heading up
-    dir.x = -rel_dir.y;
-    dir.y = -rel_dir.x;
-  } else if (curr_dir.x == 1 && curr_dir.y == 0) { //heading right
-    dir.x = rel_dir.x;
-    dir.y = rel_dir.y;
-  } else if (curr_dir.x == -1 && curr_dir.y == 0) { //heading left
-    dir.x = -rel_dir.x;
-    dir.y = -rel_dir.y;
-  }
-  return dir;
 }
 
 int update(Par* par, int* lattice)
 {
   #if D == 2
   int Ls = par->L * par->L;
-  #else if D == 3
+  #elif D == 3
   int Ls = par->L * par->L * par->L;
   #endif
   for (int i = 0; i < Ls; i++)
   {
     double r = dran();
-    int state = r >= 0.5 ? 1 : 0;
-    lattice[i] = state;
+    int x,y,z;
+    idx2xyz(par, i, &x,&y,&z);
+    disable_flags(par, lattice, x,y,z, F_VISITED | F_OCCUPIED);
+
+    if (r <= par->p)
+      enable_flags(par, lattice, x,y,z, F_OCCUPIED);
   }
   return 0;
 }
@@ -174,32 +268,42 @@ int mc(Par *par, int *lattice)
   // *** Write out information about the run: size, temperature,...
   #if D == 2
   printf("2D Lattice Percolation model.\n");
-  #else if D == 3
+  #elif D == 3
   printf("3D Lattice Percolation model.\n");
   #endif
 
   printf("\n====    L = %d    ====\n", par->L);
   printf("\nntherm  nblock   nsamp   seed\n");
   printf(" %5d   %5d   %5d   %d\n", ntherm, par->nblock, par->nsamp, par->seed);
+  printf("\n  Perc. prob\n");
 
-
-  printf("\n  S2\n");
+  #if D == 2  
+  int Ls = par->L * par->L;
+  #elif D == 3
+  int Ls = par->L * par->L * par->L;
+  #endif
+  int_queue_t measure_queue = int_queue_create(Ls);
 
   for (iblock = 0; iblock < par->nblock; iblock++) {
-
+    double block_percs = 0;
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       double sample_s2 = 0.f;
       update(par, lattice);
       
-      //measure(par, walk_buff, squared_distance, sample_w, &sample_s2);
+      int did_perc = 0;
+      int_queue_empty(&measure_queue);
+      measure(par, lattice, &measure_queue, &did_perc);
+
+      block_percs += did_perc;
     }
 
     write_config(par, lattice, fname);
-    //result_t r = result(par, block_s2, tot_w, 0);
-    //datafile_write_block_results(data_file, r, iblock);
+    result_t r = result(par, block_percs, par->nsamp);
+    datafile_write_block_results(data_file, r, iblock);
   }
 
   fclose(data_file);
+  int_queue_destroy(&measure_queue);
 
   return 1;
 }
@@ -241,11 +345,11 @@ int read_args(Par *par, char *arg)
 
   *s++ = '\0';
 
-  if (!strcmp(arg, "N")) {
+  if (!strcmp(arg, "L")) {
     par->L = strtod(s, NULL);
     #if D == 2
     int Ls = par->L * par->L;
-    #else if D == 3
+    #elif D == 3
     int Ls = par->L * par->L * par->L;
     #endif
     lattice = realloc(lattice, Ls * sizeof(int));
@@ -294,13 +398,14 @@ int main(int argc, char *argv[])
   Par *par = malloc(sizeof(Par));
 
   par->L = 0;
+  par->p = 0.5;
   par->nblock = 1;
   par->nsamp = 10000;
 
   if (argc == 1) {
     printf("Usage: %s L=16\n", argv[0]);
-    printf("Optional arguments (with defaults) nblock=%d nsamp=%d ntherm=%d seed=%d\n",
-	   par->nblock, par->nsamp, par->ntherm, par->seed);
+    printf("Optional arguments (with defaults) nblock=%d nsamp=%d ntherm=%d seed=%d, p=%lf\n",
+	   par->nblock, par->nsamp, par->ntherm, par->seed, 0.5);
     exit(EXIT_SUCCESS);
   }
 

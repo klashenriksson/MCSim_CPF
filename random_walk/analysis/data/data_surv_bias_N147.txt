@@ -1,0 +1,1 @@
+N 147 nblock 10 nsamp 10000000 ntherm 0 seed 0

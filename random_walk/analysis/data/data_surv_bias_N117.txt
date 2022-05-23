@@ -1,0 +1,11 @@
+N 117 nblock 10 nsamp 10000000 ntherm 0 seed 0
+block 0 S2 988.106015
+block 1 S2 983.773781
+block 2 S2 982.439285
+block 3 S2 976.823090
+block 4 S2 971.107259
+block 5 S2 976.716012
+block 6 S2 993.417476
+block 7 S2 980.657653
+block 8 S2 1007.316138
+block 9 S2 984.555725

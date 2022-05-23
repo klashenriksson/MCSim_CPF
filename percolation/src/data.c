@@ -24,19 +24,19 @@ void datafile_get_filename(Par* par, char* filename_buff)
 {
   #if D == 2
   sprintf(filename_buff, "data/data_2d_L%d.txt", par->L);
-  #else if D == 3
+  #elif D == 3
   sprintf(filename_buff, "data/data_3d_L%d.txt", par->L);
   #endif
 }
 
 void datafile_write_block_results(FILE* datafile, result_t r, int block)
 {
-  fprintf(datafile, "block %d S2 %lf\n", block, r.S2);
+  fprintf(datafile, "block %d perc_prob %lf\n", block, r.perc_prob);
 }
 
 int datafile_read_block_results(FILE* datafile, result_t* out_results)
 {
-    return fscanf(datafile, "block %*d S2 %lf\n", &out_results->S2);
+    return fscanf(datafile, "block %*d perc_prob %lf\n", &out_results->perc_prob);
 }
 
 int dir_exists(char* dirname)

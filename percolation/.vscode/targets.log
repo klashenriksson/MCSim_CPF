@@ -7,9 +7,8 @@ make: *** No rule to make target 'all'.  Stop.
 # License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
- 
 
-# Make data base, printed on Mon May 23 08:34:41 2022
+# Make data base, printed on Mon May 23 10:00:56 2022
 
 # Variables
 
@@ -44,7 +43,7 @@ VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/vscode-ipc-ac72cb1b-339f-42cb-91bd-9777d2c96354.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/vscode-ipc-15497c38-68f9-4303-8371-ea2d90660ab6.sock
 # environment
 VSCODE_CWD = /
 # default
@@ -56,6 +55,7 @@ VSCODE_LOG_STACK = false
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # default
+ 
 .FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink guile load
 # environment
 SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.0HwCqUdMVb/Listeners
@@ -104,7 +104,6 @@ DBUS_LAUNCHD_SESSION_BUS_SOCKET = /private/tmp/com.apple.launchd.Vuv4ir2Wdt/unix
 # automatic
 %D = $(patsubst %/,%,$(dir $%))
 # default
- 
 MAKE_COMMAND := make
 # default
 .VARIABLES := 
@@ -147,7 +146,7 @@ SUFFIXES :=
 # environment
 LANG = C
 # environment
-VSCODE_PID = 97803
+VSCODE_PID = 51796
 # variable set hash-table stats:
 # Load=67/1024=7%, Rehash=0, Collisions=3/87=3%
 
@@ -157,9 +156,9 @@ VSCODE_PID = 97803
 
 # Directories
 
-# . (device 16777220, inode 40504328): 5 files, no impossibilities.
+# . (device 16777220, inode 40504328): 6 files, no impossibilities.
 
-# 5 files, no impossibilities in 1 directories.
+# 6 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -209,12 +208,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 12 / storage = 94 B / avg = 7 B
-# current buf: size = 8162 B / used = 94 B / count = 12 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 13 / storage = 104 B / avg = 8 B
+# current buf: size = 8162 B / used = 104 B / count = 13 / avg = 8 B
 
-# strcache performance: lookups = 15 / hit rate = 20%
+# strcache performance: lookups = 16 / hit rate = 18%
 # hash-table stats:
-# Load=12/8192=0%, Rehash=0, Collisions=1/15=7%
-# Finished Make data base on Mon May 23 08:34:41 2022
+# Load=13/8192=0%, Rehash=0, Collisions=1/16=6%
+# Finished Make data base on Mon May 23 10:00:56 2022
 
  

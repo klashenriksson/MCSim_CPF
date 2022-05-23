@@ -5,7 +5,7 @@
 #define D 2
 
 typedef struct result {
-  double S2;
+  double perc_prob;
 } result_t;
 
 typedef struct Par {
