@@ -16,24 +16,20 @@ with open(sys.argv[2], "r") as config_file:
     for config in data["configs"]:
         nblock = config["nblock"]
         nsamp = config["nsamp"]
-        Ns = []
-        if "N_interval" in config:
-            N_interval = config["N_interval"]
-            Ns = range(N_interval[0], N_interval[1]+1)
-        else:
-            Ns = config["N"]
+        Ls = config["L"]
+        Ps = config["p"]
 
-        n = int(np.ceil(len(Ns)/n_chunks))
-        chunks = [Ns[i:i+n] for i in range(0, len(Ns), n)]
-        for chunk in chunks:
+        for L in Ls:
             params = [
                 filepath,
                 f"nblock={nblock}",
                 f"nsamp={nsamp}",
+                f"nblock={nblock}",
             ]
 
-            for N in chunk:
-                params.append(f"N={N}")
+            for p in Ps:
+                params.append(f"L={L}")
+                params.append(f"p={p}")
                 params.append("run")
 
             print(f"Executing {params}")

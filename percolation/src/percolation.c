@@ -141,6 +141,20 @@ void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
   int Ls = par->L * par->L * par->L;
   #endif
 
+  /*for (int y = 0; y < par->L; y++)
+  {
+    for(int x = 0; x < par->L; x++)
+    {
+      if(has_flags(par, lattice, x,y,0, F_OCCUPIED))
+      {
+        printf("x");
+      } else {
+        printf("[]");
+      }
+    }
+    printf("\n");
+  }*/
+
   int y_q = 0;
   int z_loop = 0;
   for (int x_loop = 0; x_loop < par->L; x_loop++)
@@ -150,9 +164,9 @@ void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
     {
     #endif
 
-    if (has_flags(par, lattice, x_loop, y_q, z_loop, F_OCCUPIED))
+    if (has_flags(par, lattice, x_loop, y_q, z_loop, F_OCCUPIED) && !has_flags(par, lattice, x_loop, y_q, z_loop, F_VISITED))
     {
-      int idx = x_loop + y_q * par->L + z_loop * par->L * par->L;
+      int idx = xyz2idx(par, x_loop,y_q,z_loop);
       int_queue_push_back(queue, idx);
 
       while(int_queue_size(queue) > 0)
@@ -169,22 +183,21 @@ void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
           ny += y;
           nz += z;
 
-          if (!has_flags(par, lattice, nx,ny,nz, F_OCCUPIED))
-            continue;
-
-          if (has_flags(par, lattice, nx,ny,nz, F_VISITED))
+          if (ny < y_q)
           {
-            if (ny == par->L)
-            {
-              *out_did_percolate = 1;
-              int_queue_empty(queue);
-              return;
-            }
+            continue;
           }
-          else
+
+          if (ny == par->L && y == par->L-1)
+          {
+            *out_did_percolate = 1;
+            return;
+          }
+
+          if (has_flags(par, lattice, nx,ny,nz, F_OCCUPIED) && !has_flags(par, lattice, nx, ny, nz, F_VISITED))
           {
             enable_flags(par, lattice, nx,ny,nz, F_VISITED);
-            int_queue_push_back(queue, xyz2idx(par, nx,ny,nz));
+            int_queue_push_back(queue, xyz2idx(par,nx,ny,nz));
           }
         }
       }
@@ -252,10 +265,6 @@ int mc(Par *par, int *lattice)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
 
-  // *** Read in the configuration for the present parameters if already present.
-  if (read_config(par, lattice, fname))
-    ntherm = 0;
-
   char datafilename[256] = {0};
   datafile_get_filename(par, datafilename);
   FILE* data_file = fopen(datafilename, "a");
@@ -272,7 +281,7 @@ int mc(Par *par, int *lattice)
   printf("3D Lattice Percolation model.\n");
   #endif
 
-  printf("\n====    L = %d    ====\n", par->L);
+  printf("\n====    L = %d  p = %8f  ====\n", par->L, par->p);
   printf("\nntherm  nblock   nsamp   seed\n");
   printf(" %5d   %5d   %5d   %d\n", ntherm, par->nblock, par->nsamp, par->seed);
   printf("\n  Perc. prob\n");
@@ -297,7 +306,6 @@ int mc(Par *par, int *lattice)
       block_percs += did_perc;
     }
 
-    write_config(par, lattice, fname);
     result_t r = result(par, block_percs, par->nsamp);
     datafile_write_block_results(data_file, r, iblock);
   }

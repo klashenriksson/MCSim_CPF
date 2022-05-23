@@ -29,6 +29,7 @@ int int_queue_push_back(int_queue_t* q, int i)
     if ((q->back - q->array) >= q->max_size)
     {
         printf("Shit! Hit max size..");
+        exit(0);
     }
     *(q->back) = i;
     q->back += 1;

@@ -7,8 +7,9 @@ make: *** No rule to make target 'all'.  Stop.
 # License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
+ 
 
-# Make data base, printed on Mon May 23 10:00:56 2022
+# Make data base, printed on Mon May 23 20:46:49 2022
 
 # Variables
 
@@ -55,7 +56,6 @@ VSCODE_LOG_STACK = false
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # default
- 
 .FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink guile load
 # environment
 SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.0HwCqUdMVb/Listeners
@@ -156,9 +156,9 @@ VSCODE_PID = 51796
 
 # Directories
 
-# . (device 16777220, inode 40504328): 6 files, no impossibilities.
+# . (device 16777220, inode 40504328): 7 files, no impossibilities.
 
-# 6 files, no impossibilities in 1 directories.
+# 7 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -208,12 +208,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 13 / storage = 104 B / avg = 8 B
-# current buf: size = 8162 B / used = 104 B / count = 13 / avg = 8 B
+# strcache buffers: 1 (0) / strings = 14 / storage = 113 B / avg = 8 B
+# current buf: size = 8162 B / used = 113 B / count = 14 / avg = 8 B
 
-# strcache performance: lookups = 16 / hit rate = 18%
+# strcache performance: lookups = 17 / hit rate = 17%
 # hash-table stats:
-# Load=13/8192=0%, Rehash=0, Collisions=1/16=6%
-# Finished Make data base on Mon May 23 10:00:56 2022
+# Load=14/8192=0%, Rehash=0, Collisions=1/17=6%
+# Finished Make data base on Mon May 23 20:46:49 2022
 
  
