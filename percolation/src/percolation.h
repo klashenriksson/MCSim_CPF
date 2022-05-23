@@ -2,6 +2,7 @@
 #define PERCOLATION_H
 
 #define FNAMESIZE 64
+#define D 2
 
 typedef struct result {
   double S2;
@@ -9,6 +10,7 @@ typedef struct result {
 
 typedef struct Par {
   int L;
+  double p;
   int seed;
   int ntherm;
   int nblock;

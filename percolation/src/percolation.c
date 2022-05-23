@@ -119,6 +119,17 @@ ivec2d_t dir_rel_to_abs(ivec2d_t curr_dir, ivec2d_t rel_dir)
 
 int update(Par* par, int* lattice)
 {
+  #if D == 2
+  int Ls = par->L * par->L;
+  #else if D == 3
+  int Ls = par->L * par->L * par->L;
+  #endif
+  for (int i = 0; i < Ls; i++)
+  {
+    double r = dran();
+    int state = r >= 0.5 ? 1 : 0;
+    lattice[i] = state;
+  }
   return 0;
 }
 
@@ -161,7 +172,11 @@ int mc(Par *par, int *lattice)
   }
 
   // *** Write out information about the run: size, temperature,...
+  #if D == 2
   printf("2D Lattice Percolation model.\n");
+  #else if D == 3
+  printf("3D Lattice Percolation model.\n");
+  #endif
 
   printf("\n====    L = %d    ====\n", par->L);
   printf("\nntherm  nblock   nsamp   seed\n");
@@ -228,9 +243,19 @@ int read_args(Par *par, char *arg)
 
   if (!strcmp(arg, "N")) {
     par->L = strtod(s, NULL);
-    lattice = realloc(lattice, par->L * par->L * sizeof(int));
+    #if D == 2
+    int Ls = par->L * par->L;
+    #else if D == 3
+    int Ls = par->L * par->L * par->L;
+    #endif
+    lattice = realloc(lattice, Ls * sizeof(int));
     par->ntherm = 0;
 
+    return 1;
+  }
+
+  if (!strcmp(arg, "p")) {
+    par->p = strtod(s, NULL);
     return 1;
   }
 
@@ -273,7 +298,7 @@ int main(int argc, char *argv[])
   par->nsamp = 10000;
 
   if (argc == 1) {
-    printf("Usage: %s N=16\n", argv[0]);
+    printf("Usage: %s L=16\n", argv[0]);
     printf("Optional arguments (with defaults) nblock=%d nsamp=%d ntherm=%d seed=%d\n",
 	   par->nblock, par->nsamp, par->ntherm, par->seed);
     exit(EXIT_SUCCESS);

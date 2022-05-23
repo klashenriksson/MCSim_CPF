@@ -22,7 +22,11 @@ void deserialize_par(FILE* f, Par* out_par)
 
 void datafile_get_filename(Par* par, char* filename_buff)
 {
-  sprintf(filename_buff, "data/data_L%d.txt", par->L);
+  #if D == 2
+  sprintf(filename_buff, "data/data_2d_L%d.txt", par->L);
+  #else if D == 3
+  sprintf(filename_buff, "data/data_3d_L%d.txt", par->L);
+  #endif
 }
 
 void datafile_write_block_results(FILE* datafile, result_t r, int block)

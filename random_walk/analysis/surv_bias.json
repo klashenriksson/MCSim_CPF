@@ -2,14 +2,9 @@
     "configs":
     [
         {
-            "N_interval":[1,75],
-            "nblock":10,
-            "nsamp":100000
-        },
-        {
             "N_interval":[76, 200],
-            "nblock":50,
-            "nsamp":500000  
+            "nblock":10,
+            "nsamp":10000000  
         }
     ]
 }
