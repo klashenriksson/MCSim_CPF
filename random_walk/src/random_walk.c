@@ -94,20 +94,24 @@ void measure(Par *par, int* walk_buff, int squared_distance, double w, double* o
 }
 
 
-result_t result(Par *par, double s2, double s4, double w_tot, double w2_tot, int nsamps)
+result_t result(Par *par, double s2_sum, double w_s2_sum, double s4_sum, double w_sum, double w2_sum)
 {
-  double s2_mean = s2 / w_tot;
+  double nsamps = par->nsamp;
+  double s2_mean = s2_sum / nsamps;
+  double s4_mean = s4_sum / nsamps;
 
-  double dof_quot = ((double)nsamps - 1.0)/nsamps;
-  double vari_denom = dof_quot * w_tot;
+  double s2_weighted_mean = w_s2_sum / w_sum;
 
-  double s2_variance = (s4 - 2.0*s2*s2_mean + w_tot*s2_mean*s2_mean) / (w_tot - w2_tot/w_tot);
-  
-  printf("  %8f %8f %d\n", s2_mean, s2_variance, nsamps);
+  double unweighted_s2_variance = nsamps/(nsamps - 1) * (s4_mean - s2_mean*s2_mean);
+  double b = w_sum*w_sum/w2_sum;
+
+  double weighted_s2_variance = unweighted_s2_variance/b;
+
+  printf("  %8f %8f %d\n", s2_weighted_mean, weighted_s2_variance, par->nsamp);
 
   result_t r;
-  r.S2 = s2_mean;
-  r.S2_Var = s2_variance;
+  r.S2 = s2_weighted_mean;
+  r.S2_Var = weighted_s2_variance;
 
   return r;
 }
@@ -299,11 +303,11 @@ int mc(Par *par, int *walk_buff)
   printf("\n  S2      S2_Var        nsamps used\n");
 
   for (iblock = 0; iblock < par->nblock; iblock++) {
-    int block_samples = par->nsamp;
     double block_w_tot = 0.f;
     double block_w2_tot = 0.f;
     double block_s2 = 0.f;
     double block_s4 = 0.f;
+    double block_weighted_s2 = 0.f;
 
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       double sample_w = 1.f;
@@ -315,22 +319,23 @@ int mc(Par *par, int *walk_buff)
       
       if (squared_distance == -1) {
         //discard this sample
-        block_samples--;
+        isamp--;
         continue;
       }
 
-      double sample_s2 = 0.f;
-      double sample_s4 = 0.f;
-      measure(par, walk_buff, squared_distance, sample_w, &sample_s2, &sample_s4);
+      double weighted_sample_s2 = 0.f;
+      double weighted_sample_s4 = 0.f;
+      measure(par, walk_buff, squared_distance, sample_w, &weighted_sample_s2, &weighted_sample_s4);
 
-      block_s4 += sample_s4;
-      block_s2 += sample_s2;
+      block_s2 += weighted_sample_s2 / sample_w;
+      block_s4 += weighted_sample_s4 / sample_w;
+      block_weighted_s2 += weighted_sample_s2;
       block_w_tot += sample_w;
       block_w2_tot += sample_w*sample_w;
     }
 
     write_config(par, walk_buff, fname);
-    result_t r = result(par, block_s2, block_s4, block_w_tot, block_w2_tot, block_samples);
+    result_t r = result(par, block_s2, block_weighted_s2, block_s4, block_w_tot, block_w2_tot);
     datafile_write_block_results(data_file, r, iblock);
   }
 
