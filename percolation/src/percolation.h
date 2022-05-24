@@ -2,7 +2,7 @@
 #define PERCOLATION_H
 
 #define FNAMESIZE 64
-#define D 2
+#define D 3
 
 typedef struct result {
   double perc_prob;

@@ -89,7 +89,7 @@ void enable_flags(Par* par, int* lattice, int x, int y, int z, int f)
   y = wrap(y, 0, par->L-1);
   z = wrap(z, 0, par->L-1);
   #if D == 3
-  lattice[x + y * par->L + z * par->L * par->L] = f;
+  lattice[x + y * par->L + z * par->L * par->L] |= f;
   #elif D == 2
   lattice[x + y * par->L] |= f;
   #endif
@@ -111,8 +111,9 @@ void idx2xyz(Par* par, int i, int* x, int* y, int* z)
 {
   #if D == 3
   *z = i / (par->L * par->L);
-  *y = (i-z) / par->L;
-  *x = (i-z) % par->L;
+  i -= *z * par->L * par->L;
+  *y = i / par->L;
+  *x = i % par->L;
   #elif D == 2
   *x = i % par->L;
   *y = i / par->L;
@@ -126,22 +127,17 @@ int xyz2idx(Par* par, int x, int y, int z)
   y = wrap(y, 0, par->L-1);
   z = wrap(z, 0, par->L-1);
   #if D == 3
-  return x + y*par->L + z *par-L * par->L;
+  return x + y*par->L + z * par->L * par->L;
   #elif D == 2
   return x + y*par->L;
   #endif
 }
 
-void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
+void print_lattie(Par* par, int* lattice)
 {
-  *out_did_percolate = 0;
+  printf("--------------\n");
   #if D == 2
-  int Ls = par->L * par->L;
-  #elif D == 3
-  int Ls = par->L * par->L * par->L;
-  #endif
-
-  /*for (int y = 0; y < par->L; y++)
+  for (int y = 0; y < par->L; y++)
   {
     for(int x = 0; x < par->L; x++)
     {
@@ -149,11 +145,19 @@ void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
       {
         printf("x");
       } else {
-        printf("[]");
+        printf("*");
       }
     }
     printf("\n");
-  }*/
+  }
+  #else
+  printf("not supported for requested dimension\n");
+  #endif
+}
+
+void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
+{
+  *out_did_percolate = 0;
 
   int y_q = 0;
   int z_loop = 0;
@@ -188,16 +192,21 @@ void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
             continue;
           }
 
-          if (ny == par->L && y == par->L-1)
+          if (has_flags(par, lattice, nx,ny,nz, F_OCCUPIED))
           {
-            *out_did_percolate = 1;
-            return;
-          }
-
-          if (has_flags(par, lattice, nx,ny,nz, F_OCCUPIED) && !has_flags(par, lattice, nx, ny, nz, F_VISITED))
-          {
-            enable_flags(par, lattice, nx,ny,nz, F_VISITED);
-            int_queue_push_back(queue, xyz2idx(par,nx,ny,nz));
+            if (has_flags(par, lattice, nx,ny,nz, F_VISITED))
+            {
+              if (ny == par->L)
+              {
+                *out_did_percolate = 1;
+                return;
+              }
+            }
+            else
+            {
+              enable_flags(par, lattice, nx,ny,nz, F_VISITED);
+              int_queue_push_back(queue, xyz2idx(par,nx,ny,nz));
+            }
           }
         }
       }
