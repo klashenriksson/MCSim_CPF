@@ -1,0 +1,1 @@
+L 8 p 1.000000 nblock 1 nsamp 1 ntherm 0 seed 0

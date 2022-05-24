@@ -1,4 +1,4 @@
-make --dry-run --always-make --keep-going --print-directory
+make --dry-run --keep-going --print-directory
 make: Entering directory '/Users/99klhe01/Documents/MCSim_CPF/random_walk'
 make: Leaving directory '/Users/99klhe01/Documents/MCSim_CPF/random_walk'
  

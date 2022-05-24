@@ -5,13 +5,13 @@
 
 typedef struct result {
   double S2;
+  double S2_Var;
 } result_t;
 
 typedef struct Par {
   int L;
   int N;
   int seed;
-  int ntherm;
   int nblock;
   int nsamp;
 } Par;

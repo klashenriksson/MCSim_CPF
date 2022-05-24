@@ -10,6 +10,7 @@ typedef struct datafile
 {
   double avg_s2;
   double avg_block_s4;
+  double avg_s2_vari;
   int nblocks;
 } datafile_t;
 
@@ -23,19 +24,20 @@ datafile_t read_file(FILE* f, Par* par)
   while (datafile_read_block_results(f, &r) != EOF) {
     datafile.avg_s2 += r.S2;
     datafile.avg_block_s4 += r.S2*r.S2;
+    datafile.avg_s2_vari += r.S2_Var;
     datafile.nblocks += 1;
   }
 
   datafile.avg_s2 /= datafile.nblocks;
-  datafile.avg_block_s4 /= datafile.nblocks;
+  datafile.avg_s2_vari /= datafile.nblocks;
 
   return datafile;
 }
 
 void result(Par *par, datafile_t* df)
 {
-  double s2_variance = 1.0/(fmax(df->nblocks-1,1)) * (df->avg_block_s4 - df->avg_s2*df->avg_s2);
-  printf("N %d s2 %8f s2_variance %8f\n", par->N, df->avg_s2, s2_variance);
+  double s2_block_variance = 1.0/(fmax(df->nblocks-1,1)) * (df->avg_block_s4 - df->avg_s2*df->avg_s2);
+  printf("N %d s2 %8f s2_var %8f\n", par->N, df->avg_s2, df->avg_s2_vari);
 }
 
 int main(int argc, char *argv[])

@@ -12,12 +12,12 @@
 
 int serialize_par(Par* par, char* buff)
 {
-  return sprintf(buff, "N %d nblock %d nsamp %d ntherm %d seed %d\n", par->N, par->nblock, par->nsamp, par->ntherm, par->seed);
+  return sprintf(buff, "N %d nblock %d nsamp %d seed %d\n", par->N, par->nblock, par->nsamp, par->seed);
 }
 
 void deserialize_par(FILE* f, Par* out_par)
 {
-  fscanf(f, "N %d nblock %d nsamp %d ntherm %d seed %d\n", &out_par->N, &out_par->nblock, &out_par->nsamp, &out_par->ntherm, &out_par->seed);
+  fscanf(f, "N %d nblock %d nsamp %d seed %d\n", &out_par->N, &out_par->nblock, &out_par->nsamp, &out_par->seed);
 }
 
 void datafile_get_filename(Par* par, char* filename_buff)
@@ -31,12 +31,12 @@ void datafile_get_filename(Par* par, char* filename_buff)
 
 void datafile_write_block_results(FILE* datafile, result_t r, int block)
 {
-  fprintf(datafile, "block %d S2 %lf\n", block, r.S2);
+  fprintf(datafile, "block %d S2 %lf S2_Var %lf\n", block, r.S2, r.S2_Var);
 }
 
 int datafile_read_block_results(FILE* datafile, result_t* out_results)
 {
-    return fscanf(datafile, "block %*d S2 %lf\n", &out_results->S2);
+  return fscanf(datafile, "block %*d S2 %lf S2_Var %lf\n", &out_results->S2, &out_results->S2_Var);
 }
 
 int dir_exists(char* dirname)

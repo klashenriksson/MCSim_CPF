@@ -1,0 +1,1 @@
+N 1 nblock 1 nsamp 10000 seed 0

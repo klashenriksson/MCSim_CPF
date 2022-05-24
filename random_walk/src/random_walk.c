@@ -87,24 +87,27 @@ void set_visited(int* walk_buff, int L, ivec2d_t pos)
   walk_buff[wrap(pos.x, 0, L-1) + wrap(pos.y,0,L-1)*L] = 1;
 }
 
-void measure(Par *par, int* walk_buff, int squared_distance, double w, double* out_s2)
+void measure(Par *par, int* walk_buff, int squared_distance, double w, double* out_s2, double* out_s4)
 {
   *out_s2 = w*squared_distance;
+  *out_s4 = w*squared_distance*squared_distance;
 }
 
 
-result_t result(Par *par, double s2, double w_tot, int final)
+result_t result(Par *par, double s2, double s4, double w_tot, double w2_tot, int nsamps)
 {
   double s2_mean = s2 / w_tot;
 
-  if (final)
-  {
-    printf("  --------  --------  --------\n");
-  }
-  printf("  %8f\n", s2_mean);
+  double dof_quot = ((double)nsamps - 1.0)/nsamps;
+  double vari_denom = dof_quot * w_tot;
+
+  double s2_variance = (s4 - 2.0*s2*s2_mean + w_tot*s2_mean*s2_mean) / (w_tot - w2_tot/w_tot);
+  
+  printf("  %8f %8f %d\n", s2_mean, s2_variance, nsamps);
 
   result_t r;
   r.S2 = s2_mean;
+  r.S2_Var = s2_variance;
 
   return r;
 }
@@ -270,11 +273,7 @@ void check_data_file(Par* par) {
 
 int mc(Par *par, int *walk_buff)
 {
-  int i, iblock, isamp, istep, ntherm = par->ntherm;
-
-  // *** Read in the configuration for the present parameters if already present.
-  if (read_config(par, walk_buff, fname))
-    ntherm = 0;
+  int i, iblock, isamp, istep;
 
   char datafilename[256] = {0};
   datafile_get_filename(par, datafilename);
@@ -293,19 +292,20 @@ int mc(Par *par, int *walk_buff)
   #endif
 
   printf("\n====    N = %d    ====\n", par->N);
-  printf("\nntherm  nblock   nsamp   seed\n");
-  printf(" %5d   %5d   %5d   %d\n", ntherm, par->nblock, par->nsamp, par->seed);
+  printf("\nnblock   nsamp   seed\n");
+  printf("   %5d   %5d   %d\n", par->nblock, par->nsamp, par->seed);
 
 
-  printf("\n  S2\n");
+  printf("\n  S2      S2_Var        nsamps used\n");
 
   for (iblock = 0; iblock < par->nblock; iblock++) {
-    int samples = par->nsamp;
-    double tot_w = 0.f;
+    int block_samples = par->nsamp;
+    double block_w_tot = 0.f;
+    double block_w2_tot = 0.f;
     double block_s2 = 0.f;
+    double block_s4 = 0.f;
 
     for (isamp = 0; isamp < par->nsamp; isamp++) {
-      double sample_s2 = 0.f;
       double sample_w = 1.f;
       #ifdef SURV_BIAS
       int squared_distance = update(par, walk_buff, &sample_w);
@@ -315,19 +315,22 @@ int mc(Par *par, int *walk_buff)
       
       if (squared_distance == -1) {
         //discard this sample
-        samples--;
+        block_samples--;
         continue;
       }
 
-      measure(par, walk_buff, squared_distance, sample_w, &sample_s2);
+      double sample_s2 = 0.f;
+      double sample_s4 = 0.f;
+      measure(par, walk_buff, squared_distance, sample_w, &sample_s2, &sample_s4);
 
+      block_s4 += sample_s4;
       block_s2 += sample_s2;
-      tot_w += sample_w;
+      block_w_tot += sample_w;
+      block_w2_tot += sample_w*sample_w;
     }
 
-    printf("nsamps used: %d\n", samples);
     write_config(par, walk_buff, fname);
-    result_t r = result(par, block_s2, tot_w, 0);
+    result_t r = result(par, block_s2, block_s4, block_w_tot, block_w2_tot, block_samples);
     datafile_write_block_results(data_file, r, iblock);
   }
 
@@ -377,13 +380,7 @@ int read_args(Par *par, char *arg)
     par->N = strtod(s, NULL);
     par->L = par->N*2 + 1;
     walk_buff = realloc(walk_buff, par->L * par->L * sizeof(int));
-    par->ntherm = 0;
 
-    return 1;
-  }
-
-  if (!strcmp(arg, "ntherm")) {
-    par->ntherm = strtol(s, NULL, 0);
     return 1;
   }
 
@@ -423,8 +420,8 @@ int main(int argc, char *argv[])
 
   if (argc == 1) {
     printf("Usage: %s N=16\n", argv[0]);
-    printf("Optional arguments (with defaults) nblock=%d nsamp=%d ntherm=%d seed=%d\n",
-	   par->nblock, par->nsamp, par->ntherm, par->seed);
+    printf("Optional arguments (with defaults) nblock=%d nsamp=%d seed=%d\n",
+	   par->nblock, par->nsamp, par->seed);
     exit(EXIT_SUCCESS);
   }
 
