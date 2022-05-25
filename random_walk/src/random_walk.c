@@ -19,17 +19,17 @@ typedef struct ivec2d {
   int y;
 } ivec2d_t;
 
-int ivec_dot(ivec2d_t a, ivec2d_t b)
+static inline int ivec_dot(ivec2d_t a, ivec2d_t b)
 {
   return a.x * b.x + a.y * b.y;
 }
 
-int ivec_mag2(ivec2d_t a)
+static inline int ivec_mag2(ivec2d_t a)
 {
   return ivec_dot(a,a);
 }
 
-ivec2d_t ivec_new(int x, int y)
+static inline ivec2d_t ivec_new(int x, int y)
 {
   ivec2d_t r;
   r.x = x;
@@ -37,17 +37,17 @@ ivec2d_t ivec_new(int x, int y)
   return r;
 }
 
-ivec2d_t ivec_add(ivec2d_t a, ivec2d_t b)
+static inline ivec2d_t ivec_add(ivec2d_t a, ivec2d_t b)
 {
   return ivec_new(a.x + b.x, a.y + b.y);
 }
 
-ivec2d_t ivec_sub(ivec2d_t a, ivec2d_t b)
+static inline ivec2d_t ivec_sub(ivec2d_t a, ivec2d_t b)
 {
   return ivec_new(a.x - b.x, a.y - b.y);
 }
 
-int ivec_equal(ivec2d_t a, ivec2d_t b)
+static inline int ivec_equal(ivec2d_t a, ivec2d_t b)
 {
   return a.x == b.x && a.y == b.y ? 1 : 0;
 }
@@ -62,7 +62,7 @@ const ivec2d_t relative_dirs[] = {
   };
 const int n_rel_dirs = sizeof(relative_dirs)/sizeof(ivec2d_t);
 
-int wrap(int x, int min, int max)
+static inline int wrap(int x, int min, int max)
 {
   if (x < min)
   {
@@ -77,14 +77,22 @@ int wrap(int x, int min, int max)
   return x;
 }
 
-int is_visited(int* walk_buff, int L, ivec2d_t pos)
+static inline int is_visited(int* walk_buff, int L, ivec2d_t pos)
 {
   return walk_buff[wrap(pos.x, 0, L-1) + wrap(pos.y, 0, L-1)*L] == 1;
 }
 
-void set_visited(int* walk_buff, int L, ivec2d_t pos)
+static inline void set_visited(int* walk_buff, int* used_indicies, int* n_used_indicies, int L, ivec2d_t pos)
 {
-  walk_buff[wrap(pos.x, 0, L-1) + wrap(pos.y,0,L-1)*L] = 1;
+  int idx = wrap(pos.x, 0, L-1) + wrap(pos.y,0,L-1)*L;
+  used_indicies[*n_used_indicies] = idx;
+  *n_used_indicies += 1;
+  walk_buff[idx] = 1;
+}
+
+static inline void clear_visited(int* walk_buff, int L, ivec2d_t pos)
+{
+  walk_buff[wrap(pos.x, 0, L-1) + wrap(pos.y,0,L-1)*L] = 0;
 }
 
 void measure(Par *par, int* walk_buff, int squared_distance, double w, double* out_s2, double* out_s4)
@@ -92,7 +100,6 @@ void measure(Par *par, int* walk_buff, int squared_distance, double w, double* o
   *out_s2 = w*squared_distance;
   *out_s4 = w*squared_distance*squared_distance;
 }
-
 
 result_t result(Par *par, double s2_sum, double w_s2_sum, double s4_sum, double w_sum, double w2_sum)
 {
@@ -154,10 +161,18 @@ int get_valid_dirs(int* walk_buff, ivec2d_t* rel_dirs, int L, ivec2d_t pos, ivec
   return valid_dirs;
 }
 
-int update(Par* par, int* walk_buff, double* out_w)
+int update(Par* par, int* walk_buff, int* used_indices, int* n_used_indices, double* out_w)
 {
-  int L2 = par->L * par->L;
-  memset(walk_buff, 0, L2 * sizeof(int));
+  for (int i = 0; i < *n_used_indices; i++)
+  {
+    int idx = used_indices[i];
+    int x = idx % par->L;
+    int y = idx / par->L;
+
+    clear_visited(walk_buff, par->L, ivec_new(x,y));
+  }
+  *n_used_indices = 0;
+
   const ivec2d_t abs_dirs[] = {
     {1, 0},
     {-1, 0},
@@ -175,8 +190,8 @@ int update(Par* par, int* walk_buff, double* out_w)
   ivec2d_t old_pos = origin;
   ivec2d_t new_pos = ivec_add(old_pos, dir);
 
-  set_visited(walk_buff, par->L, old_pos);
-  set_visited(walk_buff, par->L, new_pos);
+  set_visited(walk_buff, used_indices, n_used_indices, par->L, old_pos);
+  set_visited(walk_buff, used_indices, n_used_indices, par->L, new_pos);
 
   int N = par->N;
   int steps = 1;
@@ -198,7 +213,7 @@ int update(Par* par, int* walk_buff, double* out_w)
     old_pos = new_pos;
     new_pos = ivec_add(new_pos, dir);
 
-    set_visited(walk_buff, par->L, new_pos);
+    set_visited(walk_buff, used_indices, n_used_indices, par->L, new_pos);
     steps++;
   }
 
@@ -206,10 +221,18 @@ int update(Par* par, int* walk_buff, double* out_w)
   return ivec_mag2(ivec_sub(origin, new_pos));
 }
 #else
-int update(Par* par, int* walk_buff)
+int update(Par* par, int* walk_buff, int* used_indices, int* n_used_indices)
 {
-  int L2 = par->L * par->L;
-  memset(walk_buff, 0, L2 * sizeof(int));
+  for (int i = 0; i < *n_used_indices; i++)
+  {
+    int idx = used_indices[i];
+    int x = idx % par->L;
+    int y = idx / par->L;
+
+    clear_visited(walk_buff, par->L, ivec_new(x,y));
+  }
+  *n_used_indices = 0;
+
   const ivec2d_t abs_dirs[] = {
     {1, 0},
     {-1, 0},
@@ -227,8 +250,8 @@ int update(Par* par, int* walk_buff)
   ivec2d_t old_pos = origin;
   ivec2d_t new_pos = ivec_add(old_pos, dir);
 
-  set_visited(walk_buff, par->L, old_pos);
-  set_visited(walk_buff, par->L, new_pos);
+  set_visited(walk_buff, used_indices, n_used_indices, par->L, old_pos);
+  set_visited(walk_buff, used_indices, n_used_indices, par->L, new_pos);
 
   int N = par->N;
   int steps = 1;
@@ -246,7 +269,7 @@ int update(Par* par, int* walk_buff)
         return -1;
     }
 
-    set_visited(walk_buff, par->L, new_pos);
+    set_visited(walk_buff, used_indices, n_used_indices, par->L, new_pos);
     steps++;
   }
 
@@ -302,6 +325,10 @@ int mc(Par *par, int *walk_buff)
 
   printf("\n  S2      S2_Var        nsamps used\n");
 
+  memset(walk_buff, 0, sizeof(int) * par->L * par->L);
+  int* used_indices = malloc(par->N * sizeof(int));
+  int n_used_indicies = 0;
+
   for (iblock = 0; iblock < par->nblock; iblock++) {
     double block_w_tot = 0.f;
     double block_w2_tot = 0.f;
@@ -312,9 +339,9 @@ int mc(Par *par, int *walk_buff)
     for (isamp = 0; isamp < par->nsamp; isamp++) {
       double sample_w = 1.f;
       #ifdef SURV_BIAS
-      int squared_distance = update(par, walk_buff, &sample_w);
+      int squared_distance = update(par, walk_buff, used_indices, &n_used_indicies, &sample_w);
       #else
-      int squared_distance = update(par, walk_buff);
+      int squared_distance = update(par, walk_buff, used_indices, &n_used_indicies);
       #endif
       
       if (squared_distance == -1) {
