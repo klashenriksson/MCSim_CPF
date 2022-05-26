@@ -1,2 +1,0 @@
-L 16 p 1.000000 nblock 1 nsamp 10000 ntherm 0 seed 0
-block 0 perc_prob 1.000000
