@@ -1,11 +1,2 @@
-L 32 p 0.310000 nblock 10 nsamp 1000 ntherm 0 seed 0
-block 0 perc_prob 0.371000
-block 1 perc_prob 0.366000
-block 2 perc_prob 0.389000
-block 3 perc_prob 0.395000
-block 4 perc_prob 0.388000
-block 5 perc_prob 0.388000
-block 6 perc_prob 0.391000
-block 7 perc_prob 0.358000
-block 8 perc_prob 0.376000
-block 9 perc_prob 0.359000
+L 32 p 0.310000 nblock 1 nsamp 1000 ntherm 0 seed 0
+block 0 perc_prob 0.384000

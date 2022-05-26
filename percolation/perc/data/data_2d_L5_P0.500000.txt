@@ -4,3 +4,6 @@ block 0 perc_prob 0.000000
 block 0 perc_prob 0.000000
 block 0 perc_prob 0.000000
 block 0 perc_prob 0.000000
+block 0 perc_prob 0.200000
+block 0 perc_prob 0.300000
+block 0 perc_prob 0.300000

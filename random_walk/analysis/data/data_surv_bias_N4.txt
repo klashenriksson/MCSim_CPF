@@ -1,11 +1,13 @@
-N 4 nblock 10 nsamp 100000 ntherm 0 seed 0
-block 0 S2 7.038360
-block 1 S2 7.053862
-block 2 S2 7.045195
-block 3 S2 7.037618
-block 4 S2 7.043533
-block 5 S2 7.029496
-block 6 S2 7.042415
-block 7 S2 7.036924
-block 8 S2 7.037993
-block 9 S2 7.055095
+N 4 nblock 10 nsamp 2500000 seed 0
+block 0 S2 7.037108 S2_Var 0.000005
+block 1 S2 7.037887 S2_Var 0.000005
+block 2 S2 7.039269 S2_Var 0.000005
+block 3 S2 7.042360 S2_Var 0.000005
+block 4 S2 7.046405 S2_Var 0.000005
+block 5 S2 7.040312 S2_Var 0.000005
+block 6 S2 7.037684 S2_Var 0.000005
+block 7 S2 7.040802 S2_Var 0.000005
+block 8 S2 7.042278 S2_Var 0.000005
+block 9 S2 7.038850 S2_Var 0.000005
+block 0 S2 7.036258 S2_Var 0.000009
+block 0 S2 7.039049 S2_Var 0.000009

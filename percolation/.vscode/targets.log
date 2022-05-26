@@ -7,11 +7,13 @@ make: *** No rule to make target 'all'.  Stop.
 # License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
+ 
 
-# Make data base, printed on Tue May 24 12:25:56 2022
+# Make data base, printed on Thu May 26 23:06:51 2022
 
 # Variables
 
+ 
 # automatic
 <D = $(patsubst %/,%,$(dir $<))
 # automatic
@@ -43,7 +45,7 @@ VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/vscode-ipc-f210b3a9-94b2-48f1-8c4a-0877d7a8059d.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/vscode-ipc-ee42a611-a7a2-4367-9513-31cfc5156bdc.sock
 # environment
 VSCODE_CWD = /
 # default
@@ -106,6 +108,7 @@ DBUS_LAUNCHD_SESSION_BUS_SOCKET = /private/tmp/com.apple.launchd.Vuv4ir2Wdt/unix
 MAKE_COMMAND := make
 # default
 .VARIABLES := 
+ 
 # environment
 TMPDIR = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/
 # automatic
@@ -145,7 +148,7 @@ SUFFIXES :=
 # environment
 LANG = C
 # environment
-VSCODE_PID = 16667
+VSCODE_PID = 63825
 # variable set hash-table stats:
 # Load=67/1024=7%, Rehash=0, Collisions=3/87=3%
 
@@ -155,9 +158,9 @@ VSCODE_PID = 16667
 
 # Directories
 
-# . (device 16777220, inode 40504328): 8 files, no impossibilities.
+# . (device 16777220, inode 40504328): 9 files, no impossibilities.
 
-# 8 files, no impossibilities in 1 directories.
+# 9 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -193,6 +196,7 @@ makefile:
 #  File has not been updated.
 
 # Not a target:
+ 
 GNUmakefile:
 #  Implicit rule search has been done.
 #  File does not exist.
@@ -207,12 +211,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 15 / storage = 118 B / avg = 7 B
-# current buf: size = 8162 B / used = 118 B / count = 15 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 16 / storage = 123 B / avg = 7 B
+# current buf: size = 8162 B / used = 123 B / count = 16 / avg = 7 B
 
-# strcache performance: lookups = 18 / hit rate = 16%
+# strcache performance: lookups = 19 / hit rate = 15%
 # hash-table stats:
-# Load=15/8192=0%, Rehash=0, Collisions=1/18=6%
-# Finished Make data base on Tue May 24 12:25:56 2022
+# Load=16/8192=0%, Rehash=0, Collisions=1/19=5%
+# Finished Make data base on Thu May 26 23:06:51 2022
 
  

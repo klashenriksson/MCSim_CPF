@@ -1,10 +1,11 @@
 {
+    "sequential": true,
     "configs":
     [
         {
-            "N_interval":[148, 153],
-            "nblock":10,
-            "nsamp":10000000  
+            "N_interval":[180,200],
+            "nblock":1,
+            "nsamp": 7500000
         }
     ]
 }

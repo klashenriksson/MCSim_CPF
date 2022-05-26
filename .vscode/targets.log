@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Tue May 24 12:28:49 2022
+# Make data base, printed on Wed May 25 14:47:39 2022
 
 # Variables
 
@@ -43,7 +43,7 @@ VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/vscode-ipc-05080c70-a229-4b84-ad33-4843cbfd0ece.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/lr/zqjrwlh929zbrzhs7p1q_twr0000gq/T/vscode-ipc-35db6300-0474-44ec-b1f3-ecf6281675c1.sock
 # environment
 VSCODE_CWD = /
 # default
@@ -74,6 +74,7 @@ VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
 HOME = /Users/99klhe01
 # environment
 VSCODE_CODE_CACHE_PATH = /Users/99klhe01/Library/Application Support/Code/CachedData/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5
+ 
 # environment
 LOGNAME = 99klhe01
 # environment
@@ -145,7 +146,7 @@ SUFFIXES :=
 # environment
 LANG = C
 # environment
-VSCODE_PID = 16667
+VSCODE_PID = 528
 # variable set hash-table stats:
 # Load=67/1024=7%, Rehash=0, Collisions=3/87=3%
 
@@ -174,6 +175,7 @@ all:
 
 # Not a target:
 Makefile:
+ 
 #  Implicit rule search has been done.
 #  File does not exist.
 #  File has been updated.
@@ -213,6 +215,6 @@ GNUmakefile:
 # strcache performance: lookups = 24 / hit rate = 12%
 # hash-table stats:
 # Load=21/8192=0%, Rehash=0, Collisions=1/24=4%
-# Finished Make data base on Tue May 24 12:28:49 2022
+# Finished Make data base on Wed May 25 14:47:39 2022
 
  

@@ -1,0 +1,6 @@
+N 3 nblock 1 nsamp 100000 seed 0
+block 0 S2 5.569520 S2_Var 0.000020
+block 0 S2 5.571840 S2_Var 0.000020
+block 0 S2 4.545520 S2_Var 0.000051
+block 0 S2 4.571200 S2_Var 0.000512
+block 0 S2 4.559600 S2_Var 0.000505

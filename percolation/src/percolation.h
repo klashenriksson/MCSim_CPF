@@ -17,8 +17,4 @@ typedef struct Par {
   int nsamp;
 } Par;
 
-// In config.c
-extern int write_config(Par *par, int *spin, char *fname);
-extern int read_config(Par *par, int *spin, char *fname);
-
 #endif

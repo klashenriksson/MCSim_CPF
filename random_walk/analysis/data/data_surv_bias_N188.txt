@@ -1,0 +1,3 @@
+N 188 nblock 1 nsamp 5000000 seed 0
+block 0 S2 1996.618987 S2_Var 740.420303
+block 0 S2 1928.059396 S2_Var 414.744844

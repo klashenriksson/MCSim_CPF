@@ -13,6 +13,8 @@ with open(sys.argv[2], "r") as config_file:
     data = json.load(config_file)
     filepath = os.path.join(get_script_path(), rw_name)
     n_chunks = 10
+
+    run_sequential = data["sequential"] if "sequential" in data else False
     for config in data["configs"]:
         nblock = config["nblock"]
         nsamp = config["nsamp"]
@@ -23,18 +25,39 @@ with open(sys.argv[2], "r") as config_file:
         else:
             Ns = config["N"]
 
-        n = int(np.ceil(len(Ns)/n_chunks))
-        chunks = [Ns[i:i+n] for i in range(0, len(Ns), n)]
-        for chunk in chunks:
+
+        if run_sequential:
             params = [
                 filepath,
                 f"nblock={nblock}",
                 f"nsamp={nsamp}",
             ]
-
-            for N in chunk:
+            
+            for N in Ns:
                 params.append(f"N={N}")
                 params.append("run")
 
             print(f"Executing {params}")
             subprocess.Popen(params, stdout=subprocess.DEVNULL, cwd=get_script_path())
+
+        else:
+            n = int(np.ceil(len(Ns)/n_chunks))
+            chunks = [Ns[i:i+n] for i in range(0, len(Ns), n)]
+            processes = []
+            for chunk in chunks:
+                params = [
+                    filepath,
+                    f"nblock={nblock}",
+                    f"nsamp={nsamp}",
+                ]
+
+                for N in chunk:
+                    params.append(f"N={N}")
+                    params.append("run")
+
+                print(f"Executing {params}")
+                process = subprocess.Popen(params, stdout=subprocess.DEVNULL, cwd=get_script_path())
+                processes.append(process)
+            
+            for process in processes:
+                process.wait()

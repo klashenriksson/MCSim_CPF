@@ -1,1 +1,2 @@
-N 101 nblock 10 nsamp 10000000 ntherm 0 seed 0
+N 101 nblock 1 nsamp 5000000 seed 0
+block 0 S2 795.871634 S2_Var 3.220915

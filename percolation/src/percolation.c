@@ -18,6 +18,11 @@
 // Global variables
 char fname[FNAMESIZE];	// Name for config files
 
+typedef struct lattice_site {
+  int flags;
+  int vis_x,vis_y,vis_z;
+} lattice_site_t;
+
 const int nearest_neighbors[] = {
   #if D == 2
   1,0,
@@ -71,40 +76,50 @@ int wrap(int x, int min, int max)
   return x;
 }
 
-int has_flags(Par* par, int* lattice, int x, int y, int z, int f)
+int has_flags(Par* par, lattice_site_t* lattice, int x, int y, int z, int f)
 {
   x = wrap(x, 0, par->L-1);
   y = wrap(y, 0, par->L-1);
   z = wrap(z, 0, par->L-1);
-  #if D == 3
-  return lattice[x + y * par->L + z * par->L * par->L] & f;
-  #elif D == 2
-  return lattice[x + y * par->L] & f;
-  #endif
+  return lattice[x + y * par->L + z * par->L * par->L].flags & f;
 }
 
-void enable_flags(Par* par, int* lattice, int x, int y, int z, int f)
+void enable_flags(Par* par, lattice_site_t* lattice, int x, int y, int z, int f)
 {
   x = wrap(x, 0, par->L-1);
   y = wrap(y, 0, par->L-1);
   z = wrap(z, 0, par->L-1);
-  #if D == 3
-  lattice[x + y * par->L + z * par->L * par->L] |= f;
-  #elif D == 2
-  lattice[x + y * par->L] |= f;
-  #endif
+  lattice[x + y * par->L + z * par->L * par->L].flags |= f;
 }
 
-void disable_flags(Par* par, int* lattice, int x, int y, int z, int f)
+void disable_flags(Par* par, lattice_site_t* lattice, int x, int y, int z, int f)
 {
   x = wrap(x, 0, par->L-1);
   y = wrap(y, 0, par->L-1);
   z = wrap(z, 0, par->L-1);
-  #if D == 3
-  lattice[x + y * par->L + z * par->L * par->L] &= ~f;
-  #elif D == 2
-  lattice[x + y * par->L] &= ~f;
-  #endif
+  lattice[x + y * par->L + z * par->L * par->L].flags &= ~f;
+}
+
+void get_lattice_global_pos(Par* par, lattice_site_t* lattice, int x,int y,int z, int* out_x, int* out_y, int* out_z)
+{
+  x = wrap(x, 0, par->L-1);
+  y = wrap(y, 0, par->L-1);
+  z = wrap(z, 0, par->L-1);
+  lattice_site_t site = lattice[x + y * par->L + z * par->L * par->L];
+  *out_x = site.vis_x;
+  *out_y = site.vis_y;
+  *out_z = site.vis_z;
+}
+
+void set_lattice_global_pos(Par* par, lattice_site_t* lattice, int x,int y,int z, int vis_x, int vis_y, int vis_z)
+{
+  x = wrap(x, 0, par->L-1);
+  y = wrap(y, 0, par->L-1);
+  z = wrap(z, 0, par->L-1);
+  lattice_site_t* site = &lattice[x + y * par->L + z * par->L * par->L];
+  site->vis_x = vis_x;
+  site->vis_y = vis_y;
+  site->vis_z = vis_z;
 }
 
 void idx2xyz(Par* par, int i, int* x, int* y, int* z)
@@ -133,7 +148,7 @@ int xyz2idx(Par* par, int x, int y, int z)
   #endif
 }
 
-void print_lattie(Par* par, int* lattice)
+void print_lattie(Par* par, lattice_site_t* lattice)
 {
   printf("--------------\n");
   #if D == 2
@@ -155,67 +170,136 @@ void print_lattie(Par* par, int* lattice)
   #endif
 }
 
-void measure(Par *par, int* lattice, int_queue_t* queue, int* out_did_percolate)
+int check_percolation(Par* par, lattice_site_t* lattice, int_queue_t* queue, int start_x, int start_y, int start_z)
 {
-  *out_did_percolate = 0;
-
-  int y_q = 0;
-  int z_loop = 0;
-  for (int x_loop = 0; x_loop < par->L; x_loop++)
+  if (has_flags(par, lattice, start_x, start_y, start_z, F_VISITED) || !has_flags(par, lattice, start_x, start_y, start_z, F_OCCUPIED))
   {
-    #if D == 3
-    for (z_loop = 0; z_loop < par->L; z_loop++)
-    {
-    #endif
+    return 0;
+  }
 
-    if (has_flags(par, lattice, x_loop, y_q, z_loop, F_OCCUPIED) && !has_flags(par, lattice, x_loop, y_q, z_loop, F_VISITED))
-    {
-      int idx = xyz2idx(par, x_loop,y_q,z_loop);
-      int_queue_push_back(queue, idx);
+  enable_flags(par, lattice, start_x,start_y,start_z, F_VISITED);
+  set_lattice_global_pos(par, lattice, start_x, start_y, start_z, start_x, start_y, start_z);
+  int idx = xyz2idx(par, start_x, start_y, start_z);
 
-      while(int_queue_size(queue) > 0)
+  int_queue_push_back(queue, idx);
+
+  while (int_queue_size(queue) > 0)
+  {
+    idx = int_queue_pop_front(queue);
+    int x,y,z; //guaranteed to be within [0,L-1]
+    idx2xyz(par, idx, &x, &y, &z);
+
+    int global_x, global_y, global_z;
+    get_lattice_global_pos(par, lattice, x,y,z, &global_x, &global_y, &global_z);
+
+    //check each nearest neighbor
+    for (int i = 0; i < n_neighbors; i++)
+    {
+      int nx, ny, nz; //relative coords
+      get_neighbor_xyz(i, &nx, &ny, &nz);
+
+      int nbor_x = x + nx; //guaranteed to be within [-1,L]
+      int nbor_y = y + ny;
+      int nbor_z = z + nz;
+
+      int global_nx = global_x + nx;
+      int global_ny = global_y + ny;
+      int global_nz = global_z + nz;
+
+      // If not occupied, it is not of interest
+      if (!has_flags(par, lattice, nbor_x, nbor_y, nbor_z, F_OCCUPIED))
       {
-        idx = int_queue_pop_front(queue);
-        int x,y,z;
-        idx2xyz(par, idx, &x, &y, &z);
+        continue;
+      }
 
-        for (int i = 0; i < n_neighbors; i++)
+      if (has_flags(par, lattice, nbor_x, nbor_y, nbor_z, F_VISITED))
+      {
+        // We might have a percolation here!
+        int stored_nx, stored_ny, stored_nz;
+        get_lattice_global_pos(par, lattice, nbor_x, nbor_y, nbor_z, &stored_nx, &stored_ny, &stored_nz);
+        int dx = stored_nx - global_nx;
+        int dy = stored_ny - global_ny;
+        int dz = stored_nz - global_nz;
+
+        int perc_y = abs(dy) == par->L;
+        int perc_x = abs(dx) == par->L;
+        int perc_z = abs(dz) == par->L;
+        if (perc_y || perc_x || perc_z)
         {
-          int nx,ny,nz;
-          get_neighbor_xyz(i, &nx, &ny, &nz);
-          nx += x;
-          ny += y;
-          nz += z;
-
-          if (ny < y_q)
-          {
-            continue;
-          }
-
-          if (has_flags(par, lattice, nx,ny,nz, F_OCCUPIED))
-          {
-            if (has_flags(par, lattice, nx,ny,nz, F_VISITED))
-            {
-              if (ny == par->L)
-              {
-                *out_did_percolate = 1;
-                return;
-              }
-            }
-            else
-            {
-              enable_flags(par, lattice, nx,ny,nz, F_VISITED);
-              int_queue_push_back(queue, xyz2idx(par,nx,ny,nz));
-            }
-          }
+          return 1;
         }
+      }
+      else
+      {
+        // No percolation
+        set_lattice_global_pos(par, lattice, nbor_x, nbor_y, nbor_z, global_nx, global_ny, global_nz);
+        enable_flags(par, lattice, nbor_x, nbor_y, nbor_z, F_VISITED);
+        int_queue_push_back(queue, xyz2idx(par, nbor_x, nbor_y, nbor_z));
       }
     }
 
+  }
+
+  return 0;
+}
+
+void measure(Par *par, lattice_site_t* lattice, int_queue_t* queue, int* out_did_percolate)
+{
+  *out_did_percolate = 0;
+  int z = 0;
+
+  //  check percolations along y-axis
+  for (int x = 0; x < par->L; x++)
+  {
+    #if D == 3
+    for (z = 0; z < par->L; z++)
+    {
+    #endif
+      if (check_percolation(par, lattice, queue, x, 0, z))
+      {
+        *out_did_percolate = 1;
+        return;
+      }
     #if D == 3
     }
     #endif
   }
+
+  //  check percolations along x-axis
+  for (int y = 0; y < par->L; y++)
+  {
+    #if D == 3
+    for (z = 0; z < par->L; z++)
+    {
+    #endif
+      if (check_percolation(par, lattice, queue, 0, y, z))
+      {
+        *out_did_percolate = 1;
+        return;
+      }
+    #if D == 3
+    }
+    #endif
+  }
+
+  #if D == 3
+  //  check percolations along z-axis
+  for (int x = 0; x < par->L; x++)
+  {
+    #if D == 3
+    for (int y = 0; y < par->L; y++)
+    {
+    #endif
+      if (check_percolation(par, lattice, queue, x, y, 0))
+      {
+        *out_did_percolate = 1;
+        return;
+      }
+    #if D == 3
+    }
+    #endif
+  }
+  #endif
 }
 
 result_t result(Par *par, double percs, int ntot)
@@ -229,7 +313,7 @@ result_t result(Par *par, double percs, int ntot)
   return r;
 }
 
-int update(Par* par, int* lattice)
+int update(Par* par, lattice_site_t* lattice)
 {
   #if D == 2
   int Ls = par->L * par->L;
@@ -242,7 +326,7 @@ int update(Par* par, int* lattice)
     int x,y,z;
     idx2xyz(par, i, &x,&y,&z);
     disable_flags(par, lattice, x,y,z, F_VISITED | F_OCCUPIED);
-
+    
     if (r <= par->p)
       enable_flags(par, lattice, x,y,z, F_OCCUPIED);
   }
@@ -270,7 +354,7 @@ void check_data_file(Par* par) {
   }
 }
 
-int mc(Par *par, int *lattice)
+int mc(Par *par, lattice_site_t *lattice)
 {
   int i, iblock, isamp, istep, ntherm = par->ntherm;
 
@@ -300,7 +384,7 @@ int mc(Par *par, int *lattice)
   #elif D == 3
   int Ls = par->L * par->L * par->L;
   #endif
-  int_queue_t measure_queue = int_queue_create(Ls);
+  int_queue_t measure_queue = int_queue_create(Ls); //idx
 
   for (iblock = 0; iblock < par->nblock; iblock++) {
     double block_percs = 0;
@@ -325,7 +409,7 @@ int mc(Par *par, int *lattice)
   return 1;
 }
 
-int initialize_mc(Par *par, int *lattice) {
+int initialize_mc(Par *par, lattice_site_t *lattice) {
   char *f2;
 
   if (!par->L) {
@@ -347,7 +431,7 @@ int initialize_mc(Par *par, int *lattice) {
 int read_args(Par *par, char *arg)
 {
   int st;
-  static int *lattice = NULL;
+  static lattice_site_t *lattice = NULL;
   char *s;
 
   if (!strcmp(arg, "run"))
@@ -369,7 +453,7 @@ int read_args(Par *par, char *arg)
     #elif D == 3
     int Ls = par->L * par->L * par->L;
     #endif
-    lattice = realloc(lattice, Ls * sizeof(int));
+    lattice = realloc(lattice, Ls * sizeof(lattice_site_t));
     par->ntherm = 0;
 
     return 1;
@@ -399,11 +483,6 @@ int read_args(Par *par, char *arg)
     par->seed = strtol(s, NULL, 0);
     return 1;
   }
-
-  if (!strcmp(arg, "read")) {
-    return read_config(par, lattice, s);
-  }
-
 
   fprintf(stderr, "No such variable name: '%s'.\n", arg);
   return 0;

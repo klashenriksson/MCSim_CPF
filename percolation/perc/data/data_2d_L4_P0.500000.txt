@@ -14,3 +14,9 @@ block 0 perc_prob 0.700000
 block 0 perc_prob 0.700000
 block 0 perc_prob 0.790000
 block 0 perc_prob 0.790000
+block 0 perc_prob 0.333333
+block 0 perc_prob 0.800000
+block 0 perc_prob 0.400000
+block 0 perc_prob 0.500000
+block 0 perc_prob 0.500000
+block 0 perc_prob 0.200000
